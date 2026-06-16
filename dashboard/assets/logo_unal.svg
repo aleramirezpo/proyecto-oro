@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 220" role="img" aria-labelledby="title desc">
+  <title id="title">Universidad Nacional de Colombia</title>
+  <desc id="desc">Sello gráfico local para la portada del entregable académico.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8df94"/>
+      <stop offset="1" stop-color="#c69225"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="220" rx="26" fill="#f8faf8"/>
+  <rect x="12" y="12" width="156" height="196" rx="20" fill="#0b3f27"/>
+  <path d="M90 34c33 0 55 18 55 18v56c0 38-24 62-55 78-31-16-55-40-55-78V52s22-18 55-18Z" fill="url(#gold)"/>
+  <path d="M55 71h70v15H55zm0 28h70v15H55zm0 28h70v15H55z" fill="#0b3f27" opacity=".92"/>
+  <text x="90" y="104" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="800" fill="#ffffff">UN</text>
+  <text x="90" y="168" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="800" fill="#0b3f27">COLOMBIA</text>
+  <text x="90" y="196" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#f8faf8">Facultad de Minas</text>
+</svg>

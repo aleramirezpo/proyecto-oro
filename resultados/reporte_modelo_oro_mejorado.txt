@@ -1,0 +1,57 @@
+REPORTE TECNICO - MODELO MULTIVARIADO PARA PRECIO DEL ORO
+
+Archivo analizado: D:\DOCUMENTOS UNIVERSIDAD\ECONOMIA DE MINAS\PROYECTO_ORO_ML_MEJORADO\data\historicoauplata.xlsx
+Hoja de oro detectada automaticamente: historicos
+Columna objetivo detectada: Cierre
+Objetivo supervisado: prediccion del log-retorno del siguiente precio de cierre del oro (t+1).
+Esto permite una modelacion mas estable y evita fuga de informacion al usar solo informacion disponible en t.
+
+Variables utilizadas:
+- Rezagos del precio del oro
+- Retornos, diferencias, medias moviles y volatilidad movil
+- Variables temporales
+- Variables exogenas efectivamente utilizadas: cpi_us, fed_funds, ni_precio_recursos, ni_precio_reservas, precio_plata, sp500
+
+Comparacion de modelos realizada con validacion temporal:
+- XGBoost
+- RandomForest
+- ExtraTrees
+- LightGBM: disponible
+- CatBoost: disponible
+- HistGradientBoosting
+- Optuna para busqueda automatica: disponible
+- SARIMAX con variables exogenas: no evaluado en la version rapida
+
+Modelo seleccionado por mejor RMSE promedio en validacion temporal: LightGBM
+RMSE promedio CV del mejor modelo: 22.5191
+MAE promedio CV del mejor modelo: 17.4113
+R2 promedio CV del mejor modelo: 0.9669
+Hiperparametros / especificacion ganadora: {"n_estimators": 400, "learning_rate": 0.01743550640055752, "num_leaves": 38, "subsample": 0.8100381234349003, "colsample_bytree": 0.7305095587111947, "min_child_samples": 23}
+
+Metricas en test del modelo ganador:
+- MAE: 43.2868
+- RMSE: 67.1416
+- MAPE: 1.1323%
+- R2: 0.9927
+
+Lectura economica de los escenarios:
+- Escenario base: tasas reales algo mas bajas, dolar ligeramente mas debil y volatilidad contenida; el oro tiende a una senda de crecimiento moderado.
+- Escenario de crisis / alta incertidumbre: VIX mas alto, tasas reales mas bajas, dolar mas debil y mayor demanda de refugio; el oro tiende a apreciarse con mayor fuerza.
+- Escenario optimista: mejor apetito por riesgo, S&P 500 mas fuerte, VIX menor y dolar mas firme; el oro crece de forma mas lenta o se estabiliza.
+- Para el horizonte largo se usa simulacion Monte Carlo alrededor del retorno base del modelo, incorporando volatilidad y saltos por escenario.
+
+Variables mas importantes segun el modelo ganador: volatilidad_oro_5, retorno_plata_5, volatilidad_oro_3, retorno_oro_5, volatilidad_oro_10, sp500_chg_1, volatilidad_plata_10, diferencia_oro_5, volatilidad_oro_30, sp500_chg_5
+Variables mas influyentes segun SHAP: ema_oro_10, volatilidad_oro_10, diferencia_oro_10, precio_oro_lag_20, diferencia_plata_1, diferencia_oro_5, volatilidad_oro_30, precio_oro, retorno_plata_5, sp500_ma_20
+
+Advertencias de descarga externa:
+- No se pudo descargar DGS10: HTTP Error 504: Gateway Time-out
+- No se pudo descargar T10YIE: HTTP Error 504: Gateway Time-out
+- No se pudo descargar DTWEXBGS: HTTP Error 504: Gateway Time-out
+- No se pudo descargar VIXCLS: HTTP Error 504: Gateway Time-out
+- No se pudo descargar DCOILWTICO: HTTP Error 504: Gateway Time-out
+- No se pudo descargar DEXCOUS: HTTP Error 404: Not Found
+
+Conclusion tecnica:
+El flujo es reproducible, respeta el orden temporal, no usa train_test_split aleatorio y evita mezclar pasado y futuro.
+El horizonte corto se interpreta como pronostico condicional al ultimo bloque historico observado.
+El horizonte hasta 2035 debe leerse como simulacion por escenarios y no como un unico valor exacto determinista.

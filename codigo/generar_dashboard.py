@@ -353,43 +353,49 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Modelo multivariado del precio del oro</title>
+  <title>Predicción del precio del oro</title>
   <script>
     window.MathJax = {{ tex: {{ inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }}, svg: {{ fontCache: 'global' }} }};
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <style>
     :root {{
-      --bg:#07150f; --sidebar:#092016; --panel:#ffffff; --soft:#f7faf8; --text:#122018;
-      --muted:#64746b; --line:#dfe7e2; --gold:#d6a73a; --blue:#2563eb; --green:#0f6b3a;
+      --bg:#eef2ef; --sidebar:#ffffff; --panel:#ffffff; --soft:#f7faf8; --text:#122018;
+      --muted:#52645b; --line:#dfe7e2; --gold:#d6a73a; --blue:#1d4ed8; --green:#0f6b3a;
       --red:#b91c1c; --purple:#6d28d9; --slate:#334155; --cream:#f7f0dc;
     }}
     * {{ box-sizing:border-box; }}
     html, body {{ height:100%; overflow:hidden; }}
-    body {{ margin:0; background:radial-gradient(circle at 18% 10%, rgba(214,167,58,.22), transparent 30%), linear-gradient(135deg,#07150f,#10251a 48%,#0a1118); color:var(--text); font-family:Segoe UI, Arial, sans-serif; }}
+    body {{ margin:0; background:radial-gradient(circle at 16% 10%, rgba(214,167,58,.18), transparent 30%), linear-gradient(135deg,#f7faf8,#eef2ef 55%,#e6ece8); color:var(--text); font-family:Segoe UI, Arial, sans-serif; }}
     .layout {{ display:grid; grid-template-columns:292px 1fr; height:100vh; }}
-    aside {{ background:rgba(9,32,22,.96); color:white; padding:24px 20px; border-right:1px solid rgba(255,255,255,.10); overflow:auto; }}
+    aside {{ background:rgba(255,255,255,.94); color:#122018; padding:24px 20px; border-right:1px solid rgba(15,77,47,.12); overflow:auto; box-shadow:12px 0 36px rgba(15,23,42,.08); }}
     aside h1 {{ font-size:19px; line-height:1.15; margin:0 0 8px; }}
-    aside p {{ color:#c7d7cd; font-size:13px; line-height:1.45; margin:0 0 16px; }}
-    nav button {{ width:100%; display:block; color:#dbe7df; background:transparent; border:0; text-align:left; cursor:pointer; padding:9px 11px; border-radius:11px; margin:3px 0; font-size:13px; }}
-    nav button:hover, nav button.active {{ background:rgba(214,167,58,.18); color:white; }}
+    aside p {{ color:#52645b; font-size:13px; line-height:1.45; margin:0 0 16px; }}
+    nav button {{ width:100%; display:block; color:#24362d; background:transparent; border:0; text-align:left; cursor:pointer; padding:9px 11px; border-radius:11px; margin:3px 0; font-size:13px; }}
+    nav button:hover, nav button.active {{ background:#edf7ef; color:#0f4d2f; }}
     .main {{ min-width:0; height:100vh; display:flex; flex-direction:column; }}
     .stage {{ position:relative; flex:1; min-height:0; margin:22px 22px 12px; }}
-    .slide {{ position:absolute; inset:0; overflow:auto; opacity:0; transform:translateX(24px) scale(.985); pointer-events:none; transition:opacity .24s ease, transform .24s ease; background:var(--panel); border:1px solid rgba(255,255,255,.35); border-radius:28px; padding:30px; box-shadow:0 30px 90px rgba(0,0,0,.28); }}
+    .slide {{ position:absolute; inset:0; overflow:auto; opacity:0; transform:translateX(24px) scale(.985); pointer-events:none; transition:opacity .24s ease, transform .24s ease; background:var(--panel); border:1px solid rgba(15,77,47,.12); border-radius:28px; padding:30px; box-shadow:0 22px 70px rgba(15,23,42,.13); }}
     .slide.active {{ opacity:1; transform:translateX(0) scale(1); pointer-events:auto; z-index:2; }}
-    .cover {{ display:flex; flex-direction:column; min-height:100%; color:white; overflow:hidden; background:radial-gradient(circle at 88% 18%, rgba(214,167,58,.36), transparent 26%), linear-gradient(135deg, rgba(8,47,31,.97), rgba(9,32,22,.96) 42%, rgba(15,23,42,.98)); }}
-    .cover::before {{ content:""; position:absolute; inset:0; background:linear-gradient(115deg, rgba(255,255,255,.07), transparent 40%), repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 78px); pointer-events:none; }}
+    .cover {{ display:flex; flex-direction:column; min-height:100%; color:#122018; overflow:hidden; background:radial-gradient(circle at 86% 14%, rgba(214,167,58,.22), transparent 28%), linear-gradient(135deg,#ffffff 0%,#f8faf8 55%,#f3ead3 100%); }}
+    .cover::before {{ content:""; position:absolute; inset:0; background:linear-gradient(115deg, rgba(15,77,47,.07), transparent 45%), repeating-linear-gradient(90deg, rgba(15,77,47,.045) 0 1px, transparent 1px 82px); pointer-events:none; }}
     .cover-content {{ position:relative; z-index:1; display:grid; grid-template-columns:1fr 180px; gap:28px; align-items:start; }}
-    .logo-unal {{ width:126px; justify-self:end; filter:drop-shadow(0 14px 30px rgba(0,0,0,.32)); }}
-    .eyebrow {{ color:#f7d98d; font-weight:700; letter-spacing:.18em; text-transform:uppercase; font-size:13px; }}
-    .cover h2 {{ margin:18px 0 22px; font-size:clamp(36px,5.4vw,72px); line-height:.98; max-width:980px; letter-spacing:-.055em; }}
+    .logo-unal {{ width:150px; max-height:170px; object-fit:contain; justify-self:end; background:white; border:1px solid rgba(15,77,47,.12); border-radius:18px; padding:14px; box-shadow:0 16px 36px rgba(15,23,42,.10); }}
+    .eyebrow {{ color:#0f6b3a; font-weight:800; letter-spacing:.16em; text-transform:uppercase; font-size:13px; }}
+    .cover h2 {{ margin:16px 0 12px; color:#0f2419; font-size:clamp(36px,5.2vw,68px); line-height:1; max-width:980px; letter-spacing:-.052em; }}
+    .subtitle {{ max-width:980px; color:#334155; font-size:clamp(18px,2vw,25px); line-height:1.35; margin:0 0 18px; }}
+    .cover-intro {{ max-width:1040px; color:#334155; font-size:16px; line-height:1.58; margin:0 0 18px; }}
     .cover-meta {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; max-width:820px; }}
-    .meta-card {{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:18px; padding:14px 16px; }}
-    .meta-card span {{ display:block; color:#b9d4c2; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }}
+    .meta-card {{ background:rgba(255,255,255,.82); border:1px solid rgba(15,77,47,.12); border-radius:18px; padding:14px 16px; box-shadow:0 12px 30px rgba(15,23,42,.08); }}
+    .meta-card span {{ display:block; color:#52645b; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }}
     .meta-card strong {{ display:block; margin-top:5px; font-size:18px; }}
-    .cover-footer {{ position:relative; z-index:1; margin-top:auto; display:flex; justify-content:space-between; gap:18px; align-items:end; color:#e7f2ea; border-top:1px solid rgba(255,255,255,.16); padding-top:20px; }}
+    .summary-strip {{ position:relative; z-index:1; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:18px; }}
+    .summary-strip div {{ background:#10251a; color:white; border-radius:16px; padding:12px 14px; }}
+    .summary-strip span {{ display:block; color:#f7d98d; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }}
+    .summary-strip strong {{ display:block; margin-top:4px; }}
+    .cover-footer {{ position:relative; z-index:1; margin-top:auto; display:flex; justify-content:space-between; gap:18px; align-items:end; color:#122018; border-top:1px solid rgba(15,77,47,.14); padding-top:20px; }}
     .cover-footer strong {{ display:block; font-size:20px; }}
-    .cover-footer span {{ color:#b9d4c2; }}
+    .cover-footer span {{ color:#52645b; }}
     .slide h2 {{ margin:0 0 10px; color:#0f4d2f; font-size:clamp(28px,3vw,44px); letter-spacing:-.035em; }}
     .slide h3 {{ margin:18px 0 8px; color:#143223; }}
     .lead {{ color:var(--muted); margin-top:0; line-height:1.6; font-size:17px; max-width:1080px; }}
@@ -416,6 +422,11 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     .flow {{ counter-reset:step; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }}
     .flow div {{ counter-increment:step; background:#f8faf8; border:1px solid var(--line); border-radius:16px; padding:14px; }}
     .flow div::before {{ content:counter(step); display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#0f6b3a; color:white; font-weight:700; margin-right:8px; }}
+    .compact-table {{ width:100%; border-collapse:collapse; font-size:14px; }}
+    .compact-table th {{ background:#10251a; color:#fff; text-align:left; padding:10px; }}
+    .compact-table td {{ border-bottom:1px solid var(--line); padding:10px; vertical-align:top; }}
+    .reference-list {{ display:grid; gap:10px; margin-top:14px; }}
+    .reference-list div {{ background:#f8faf8; border:1px solid var(--line); border-radius:16px; padding:14px 16px; color:#334155; line-height:1.5; }}
     .data-table {{ width:100%; border-collapse:collapse; font-size:13px; overflow:hidden; border-radius:12px; }}
     .data-table th {{ background:#111827; color:white; padding:9px; text-align:left; position:sticky; top:0; }}
     .data-table td {{ padding:8px 9px; border-bottom:1px solid #e5e7eb; }}
@@ -423,13 +434,13 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     .downloads {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }}
     .downloads a {{ display:block; background:#0f172a; color:white; padding:14px 16px; border-radius:14px; text-decoration:none; }}
     .downloads a:hover {{ background:#1e293b; }}
-    .controls {{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 22px 18px; color:white; }}
+    .controls {{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 22px 18px; color:#122018; }}
     .control-group {{ display:flex; gap:10px; align-items:center; }}
-    .controls button {{ border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.10); color:white; border-radius:999px; padding:10px 16px; cursor:pointer; font-weight:700; }}
-    .controls button:hover {{ background:rgba(214,167,58,.24); }}
-    .progress {{ flex:1; height:8px; background:rgba(255,255,255,.13); border-radius:999px; overflow:hidden; }}
+    .controls button {{ border:1px solid rgba(15,77,47,.16); background:#ffffff; color:#122018; border-radius:999px; padding:10px 16px; cursor:pointer; font-weight:700; box-shadow:0 8px 20px rgba(15,23,42,.08); }}
+    .controls button:hover {{ background:#edf7ef; }}
+    .progress {{ flex:1; height:8px; background:rgba(15,77,47,.13); border-radius:999px; overflow:hidden; }}
     .progress span {{ display:block; height:100%; width:0; background:linear-gradient(90deg,#0f6b3a,#d6a73a); transition:width .2s ease; }}
-    .counter {{ min-width:88px; text-align:center; color:#d9e6dd; font-variant-numeric:tabular-nums; }}
+    .counter {{ min-width:88px; text-align:center; color:#52645b; font-variant-numeric:tabular-nums; }}
     footer {{ color:#64746b; text-align:center; padding:14px; }}
     @media (max-width: 1100px) {{ .layout {{ grid-template-columns:1fr; }} aside {{ display:none; }} .stage {{ margin:12px; }} .slide {{ padding:20px; border-radius:22px; }} .two-col, .grid-2, .grid-3, .cover-content {{ grid-template-columns:1fr; }} .logo-unal {{ justify-self:start; width:92px; }} .cover-footer {{ display:block; }} html, body {{ overflow:hidden; }} }}
   </style>
@@ -442,24 +453,28 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <nav id="nav">
       <button type="button" data-slide="0">Portada</button>
       <button type="button" data-slide="1">Resumen ejecutivo</button>
-      <button type="button" data-slide="2">Introducción</button>
+      <button type="button" data-slide="2">Contexto oro</button>
       <button type="button" data-slide="3">Objetivos</button>
       <button type="button" data-slide="4">Marco teórico</button>
-      <button type="button" data-slide="5">Ecuaciones</button>
-      <button type="button" data-slide="6">Materiales y métodos</button>
-      <button type="button" data-slide="7">Flujo metodológico</button>
-      <button type="button" data-slide="8">Variables</button>
-      <button type="button" data-slide="9">Métricas</button>
-      <button type="button" data-slide="10">Mercado histórico</button>
-      <button type="button" data-slide="11">Modelos</button>
-      <button type="button" data-slide="12">Validación test</button>
-      <button type="button" data-slide="13">Interpretabilidad</button>
-      <button type="button" data-slide="14">Pronóstico 2026</button>
-      <button type="button" data-slide="15">Monte Carlo 2035</button>
-      <button type="button" data-slide="16">Trayectoria única</button>
-      <button type="button" data-slide="17">Discusión</button>
-      <button type="button" data-slide="18">Conclusiones</button>
-      <button type="button" data-slide="19">Archivos</button>
+      <button type="button" data-slide="5">Método tradicional</button>
+      <button type="button" data-slide="6">XGBoost</button>
+      <button type="button" data-slide="7">Hiperparámetros</button>
+      <button type="button" data-slide="8">Ecuaciones</button>
+      <button type="button" data-slide="9">Materiales y métodos</button>
+      <button type="button" data-slide="10">Flujo metodológico</button>
+      <button type="button" data-slide="11">Variables</button>
+      <button type="button" data-slide="12">Métricas</button>
+      <button type="button" data-slide="13">Mercado histórico</button>
+      <button type="button" data-slide="14">Modelos</button>
+      <button type="button" data-slide="15">Validación test</button>
+      <button type="button" data-slide="16">Interpretabilidad</button>
+      <button type="button" data-slide="17">Pronóstico 2026</button>
+      <button type="button" data-slide="18">Monte Carlo 2035</button>
+      <button type="button" data-slide="19">Trayectoria única</button>
+      <button type="button" data-slide="20">Discusión</button>
+      <button type="button" data-slide="21">Conclusiones</button>
+      <button type="button" data-slide="22">Referencias</button>
+      <button type="button" data-slide="23">Archivos</button>
     </nav>
   </aside>
   <main class="main">
@@ -467,18 +482,28 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide cover active" id="portada">
       <div class="cover-content">
         <div>
-          <div class="eyebrow">Materia: Economía de Minas</div>
-          <h2>Modelo multivariado de machine learning para la predicción y simulación del precio del oro</h2>
+          <div class="eyebrow">Asignatura: Economía de Minas · Taller 4</div>
+          <h2>Predicción del precio del oro: método tradicional vs Machine Learning</h2>
+          <p class="subtitle">Entregable académico para contrastar un enfoque tendencial tradicional con modelos de Machine Learning aplicados a la proyección del commodity oro.</p>
+          <p class="cover-intro">Este entregable presenta una comparación metodológica entre una regresión polinómica como referencia tradicional y modelos basados en árboles. La versión final del proyecto conserva la evaluación ampliada de algoritmos y selecciona LightGBM + Optuna por validación temporal, sin interpretar los escenarios como precios garantizados.</p>
           <div class="cover-meta">
-            <div class="meta-card"><span>Autores</span><strong>Alejandro Ramírez y Paola Patiño</strong></div>
+            <div class="meta-card"><span>Autores</span><strong>Alejandro Ramírez Polo y Leidy Paola Patiño Muñoz</strong></div>
             <div class="meta-card"><span>Profesor</span><strong>Jheyson Bedoya</strong></div>
           </div>
         </div>
-        <img class="logo-unal" src="assets/logo_unal.svg" alt="Universidad Nacional de Colombia">
+        <img class="logo-unal" src="assets/img/logo-unal.png" alt="Universidad Nacional de Colombia">
+      </div>
+      <div class="summary-strip">
+        <div><span>Commodity</span><strong>Oro</strong></div>
+        <div><span>Unidad</span><strong>USD/oz</strong></div>
+        <div><span>Horizonte</span><strong>10 años</strong></div>
+        <div><span>Método tradicional</span><strong>Regresión polinómica</strong></div>
+        <div><span>Machine Learning</span><strong>XGBoost / LightGBM</strong></div>
+        <div><span>Escenario central</span><strong>P50</strong></div>
       </div>
       <div class="cover-footer">
-        <div><strong>Universidad Nacional de Colombia</strong><span>Facultad de Minas</span></div>
-        <div><span>Medellín, 2026</span></div>
+        <div><strong>Universidad Nacional de Colombia</strong><span>Facultad de Minas - Sede Medellín</span></div>
+        <div><span>Junio de 2026</span></div>
       </div>
     </section>
 
@@ -486,19 +511,19 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <div class="hero">
         <span class="tag">Resumen ejecutivo</span>
         <h2>Modelo multivariado del precio del oro</h2>
-        <p>Resultados de machine learning, validación temporal, importancia de variables, pronósticos por escenarios y simulación Monte Carlo. La selección principal se hizo por menor RMSE promedio de validación temporal.</p>
+      <p>Resultados de Machine Learning, validación temporal, importancia de variables, pronósticos por escenarios y simulación Monte Carlo. La selección principal se hizo por menor RMSE promedio de validación temporal.</p>
         <div class="kpi-grid">{kpis}</div>
       </div>
     </section>
 
     <section class="slide" id="introduccion">
       <span class="tag">Contexto</span>
-      <h2>Introducción</h2>
+      <h2>Contexto del commodity oro</h2>
       <p class="lead">El precio del oro es una variable relevante para la evaluación económica de proyectos mineros, la estimación de recursos y reservas, la planeación financiera y el análisis de riesgo. Su comportamiento depende de factores financieros, macroeconómicos y de mercado, entre ellos tasas de interés, inflación, dólar, volatilidad, precios de metales relacionados y expectativas de inversión.</p>
       <div class="grid-3">
-        <div class="method-card"><strong>Horizonte histórico</strong><br>Base del precio del oro entre 2016 y 2026.</div>
-        <div class="method-card"><strong>Versión mejorada</strong><br>Comparación ampliada con LightGBM, CatBoost, Random Forest, Extra Trees, HistGradientBoosting y Optuna.</div>
-        <div class="method-card"><strong>Uso esperado</strong><br>Pronóstico condicional y distribución de escenarios posibles, no precio exacto e invariable.</div>
+        <div class="method-card"><strong>Commodity metálico</strong><br>El oro se negocia internacionalmente como activo financiero, reserva de valor e insumo relevante para análisis minero.</div>
+        <div class="method-card"><strong>Horizonte histórico</strong><br>La base del proyecto cubre el precio del oro entre 2016 y 2026, junto con variables de mercado relacionadas.</div>
+        <div class="method-card"><strong>Uso esperado</strong><br>Los resultados se interpretan como pronóstico condicional y distribución de escenarios posibles, no como precio exacto e invariable.</div>
       </div>
     </section>
 
@@ -506,7 +531,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <span class="tag">Propósito</span>
       <h2>Objetivos</h2>
       <div class="grid-2">
-        <div class="method-card"><strong>Objetivo general</strong><br>Construir, validar y documentar un modelo multivariado de machine learning para estimar el comportamiento del precio del oro y generar escenarios de simulación hasta 2035.</div>
+        <div class="method-card"><strong>Objetivo general</strong><br>Construir, validar y documentar un modelo multivariado de Machine Learning para estimar el comportamiento del precio del oro y generar escenarios de simulación hasta 2035.</div>
         <div class="method-card"><strong>Objetivos específicos</strong>
           <ul class="clean-list">
             <li>Consolidar datos de oro, plata, NI 43-101 y variables macroeconómicas.</li>
@@ -529,6 +554,45 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       </div>
     </section>
 
+    <section class="slide" id="metodo-tradicional">
+      <span class="tag">Método tradicional</span>
+      <h2>Regresión polinómica como referencia</h2>
+      <p class="lead">El método tradicional ajusta una curva matemática al precio histórico del oro y luego extrapola esa tendencia hacia el futuro. Su ventaja es la simplicidad e interpretación directa; su limitación es que depende mucho de la forma de la curva y puede volverse rígido en horizontes largos.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[P_{{trad}}(t)=\beta_0+\beta_1t+\beta_2t^2\]<p>Ajuste tendencial de segundo grado usado como referencia conceptual.</p></div>
+        <div class="method-card"><strong>Alcance dentro de este entregable</strong><br>No se modifican los resultados numéricos del proyecto. La comparación final disponible en los archivos corresponde a familias de Machine Learning evaluadas con validación temporal; la regresión polinómica se presenta como base metodológica tradicional para interpretación.</div>
+      </div>
+    </section>
+
+    <section class="slide" id="metodo-xgboost">
+      <span class="tag">Machine Learning</span>
+      <h2>Método XGBoost</h2>
+      <p class="lead">XGBoost es un algoritmo supervisado basado en un ensamble secuencial de árboles de decisión. Cada árbol corrige parte del error cometido por los árboles anteriores. En este proyecto se comparó XGBoost con otras familias; la versión mejorada seleccionó LightGBM + Optuna por menor RMSE promedio de validación temporal.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[y_t=\ln\left(\frac{{P_{{t+1}}^{{Au}}}}{{P_t^{{Au}}}}\right)\]\[\hat{{P}}_{{t+1}}^{{Au}}=P_t^{{Au}}\exp(\hat{{y}}_t)\]<p>El modelo predice primero el log-retorno y luego reconstruye el precio.</p></div>
+        <div class="equation-card">\[\hat{{y}}_t=\sum_{{m=1}}^M \eta f_m(x_t)\]<p>\(f_m(x_t)\) es el árbol de decisión número \(m\), \(\eta\) es el learning rate y \(M\) el número total de árboles.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="hiperparametros">
+      <span class="tag">Configuración</span>
+      <h2>Hiperparámetros principales de XGBoost</h2>
+      <p class="lead">Estos hiperparámetros corresponden a la configuración XGBoost registrada en el código del proyecto y buscan equilibrar capacidad predictiva con control del sobreajuste.</p>
+      <div class="table-wrap">
+        <table class="compact-table">
+          <thead><tr><th>Hiperparámetro</th><th>Valor</th><th>Interpretación</th></tr></thead>
+          <tbody>
+            <tr><td><code>n_estimators</code></td><td>500</td><td>Número de árboles del ensamble.</td></tr>
+            <tr><td><code>max_depth</code></td><td>4</td><td>Profundidad máxima de cada árbol.</td></tr>
+            <tr><td><code>learning_rate</code></td><td>0.03</td><td>Aporte incremental de cada árbol.</td></tr>
+            <tr><td><code>subsample</code></td><td>0.85</td><td>Porcentaje de datos usado por cada árbol.</td></tr>
+            <tr><td><code>alpha</code></td><td>0.02</td><td>Regularización L1.</td></tr>
+            <tr><td><code>lambda</code></td><td>1.40</td><td>Regularización L2.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="slide" id="ecuaciones">
       <span class="tag">Formulación</span>
       <h2>Ecuaciones principales</h2>
@@ -543,7 +607,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide" id="materiales-metodos">
       <span class="tag">Materiales y métodos</span>
       <h2>Datos y fuentes</h2>
-      <p class="lead">El archivo base fue <strong>historicoauplata.xlsx</strong>. Se usaron las hojas de históricos, plata y NI 43-101; además se consultaron series macroeconómicas externas desde FRED cuando estuvieron disponibles.</p>
+      <p class="lead">El archivo base fue <strong>historicoauplata.xlsx</strong>. Se usaron las hojas de históricos, plata y NI 43-101; además se consultaron series macroeconómicas externas desde FRED cuando estuvieron disponibles. Estas variables permiten representar tanto la dinámica histórica del oro como condiciones de mercado que pueden influir en su comportamiento futuro.</p>
       <div class="grid-3">
         <div class="method-card"><strong>Oro XAU/USD</strong><br>Serie principal de precio de cierre, variable objetivo y variables técnicas.</div>
         <div class="method-card"><strong>Plata</strong><br>Variable exógena para capturar relación entre metales preciosos.</div>
@@ -646,6 +710,12 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <span class="tag">Simulación</span>
       <h2>Monte Carlo hasta 2035</h2>
       <p class="lead">Escenarios de largo plazo. No son valores deterministas: muestran distribuciones posibles bajo supuestos de retorno, volatilidad y saltos.</p>
+      <div class="insights">
+        <div class="insight"><strong>P10:</strong> escenario bajo. El 10% de las simulaciones queda por debajo de ese valor.</div>
+        <div class="insight"><strong>P50:</strong> escenario central o mediano. No garantiza el precio futuro; resume la trayectoria central de simulación.</div>
+        <div class="insight"><strong>P90:</strong> escenario alto. El 90% de las simulaciones queda por debajo de ese valor.</div>
+        <div class="insight"><strong>Banda P10-P90:</strong> representa aproximadamente el 80% central de los escenarios simulados.</div>
+      </div>
       {divs[9]}
       {divs[10]}
       <h3>Tabla de escenarios</h3><div class="table-wrap">{scenario_table}</div>
@@ -673,10 +743,24 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <span class="tag">Cierre</span>
       <h2>Conclusiones</h2>
       <div class="insights">
-        <div class="insight">Se construyó un flujo reproducible de machine learning para el precio del oro, respetando el orden temporal.</div>
+        <div class="insight">Se construyó un flujo reproducible de Machine Learning para el precio del oro, respetando el orden temporal.</div>
         <div class="insight">La versión inicial basada en XGBoost fue mejorada con comparación amplia de algoritmos y optimización de hiperparámetros.</div>
         <div class="insight">El modelo seleccionado por validación temporal fue LightGBM optimizado con Optuna, con MAPE de 1.1323% en test.</div>
         <div class="insight">La simulación Monte Carlo permitió generar bandas de incertidumbre y escenarios hasta 2035 útiles para análisis económico y sensibilidad en proyectos mineros.</div>
+      </div>
+    </section>
+
+    <section class="slide" id="referencias">
+      <span class="tag">Soporte académico</span>
+      <h2>Referencias</h2>
+      <p class="lead">Referencias principales usadas para sustentar los modelos, la predicción de series temporales y el contexto técnico del proyecto.</p>
+      <div class="reference-list">
+        <div>Chen, T. y Guestrin, C. (2016). <em>XGBoost: A scalable tree boosting system</em>. Proceedings of KDD.</div>
+        <div>Ke, G. et al. (2017). <em>LightGBM: A highly efficient gradient boosting decision tree</em>. NeurIPS.</div>
+        <div>Prokhorenkova, L. et al. (2018). <em>CatBoost: unbiased boosting with categorical features</em>. NeurIPS.</div>
+        <div>Hyndman, R. y Athanasopoulos, G. (2021). <em>Forecasting: Principles and Practice</em>.</div>
+        <div>Canadian Securities Administrators. (2014). <em>National Instrument 43-101 Standards of Disclosure for Mineral Projects</em>.</div>
+        <div>Universidad Nacional de Colombia. Guía de identidad visual: <a href="https://identidad.unal.edu.co/guia-identidad-visual/" target="_blank" rel="noopener">identidad.unal.edu.co</a>.</div>
       </div>
     </section>
 
@@ -700,7 +784,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
         <button type="button" id="next">Siguiente</button>
       </div>
       <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
-      <div class="counter" id="counter">1 / 20</div>
+      <div class="counter" id="counter">1 / 24</div>
     </div>
   </main>
 </div>

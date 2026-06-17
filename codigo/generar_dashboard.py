@@ -452,29 +452,30 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <p>Entregable académico para Economía de Minas, con resultados del modelo LightGBM + Optuna y escenarios Monte Carlo.</p>
     <nav id="nav">
       <button type="button" data-slide="0">Portada</button>
-      <button type="button" data-slide="1">Resumen ejecutivo</button>
-      <button type="button" data-slide="2">Contexto oro</button>
-      <button type="button" data-slide="3">Objetivos</button>
-      <button type="button" data-slide="4">Series financieras</button>
-      <button type="button" data-slide="5">Modelo final</button>
-      <button type="button" data-slide="6">LightGBM vs XGBoost</button>
-      <button type="button" data-slide="7">Optuna</button>
-      <button type="button" data-slide="8">Variables y ecuaciones</button>
-      <button type="button" data-slide="9">Materiales y métodos</button>
-      <button type="button" data-slide="10">Flujo metodológico</button>
-      <button type="button" data-slide="11">Variables</button>
-      <button type="button" data-slide="12">Métricas</button>
-      <button type="button" data-slide="13">Mercado histórico</button>
-      <button type="button" data-slide="14">Modelos</button>
-      <button type="button" data-slide="15">Validación test</button>
-      <button type="button" data-slide="16">Interpretabilidad</button>
-      <button type="button" data-slide="17">Pronóstico 2026</button>
-      <button type="button" data-slide="18">Monte Carlo 2035</button>
-      <button type="button" data-slide="19">Trayectoria única</button>
-      <button type="button" data-slide="20">Discusión</button>
-      <button type="button" data-slide="21">Conclusiones</button>
-      <button type="button" data-slide="22">Referencias</button>
-      <button type="button" data-slide="23">Archivos</button>
+      <button type="button" data-slide="1">Abstract</button>
+      <button type="button" data-slide="2">Introducción</button>
+      <button type="button" data-slide="3">Contexto oro</button>
+      <button type="button" data-slide="4">Objetivos</button>
+      <button type="button" data-slide="5">Series financieras</button>
+      <button type="button" data-slide="6">Modelo final</button>
+      <button type="button" data-slide="7">LightGBM vs XGBoost</button>
+      <button type="button" data-slide="8">Optuna</button>
+      <button type="button" data-slide="9">Variables y ecuaciones</button>
+      <button type="button" data-slide="10">Materiales y métodos</button>
+      <button type="button" data-slide="11">Flujo metodológico</button>
+      <button type="button" data-slide="12">Variables</button>
+      <button type="button" data-slide="13">Métricas</button>
+      <button type="button" data-slide="14">Mercado histórico</button>
+      <button type="button" data-slide="15">Modelos</button>
+      <button type="button" data-slide="16">Validación test</button>
+      <button type="button" data-slide="17">Interpretabilidad</button>
+      <button type="button" data-slide="18">Pronóstico 2026</button>
+      <button type="button" data-slide="19">Monte Carlo 2035</button>
+      <button type="button" data-slide="20">Trayectoria única</button>
+      <button type="button" data-slide="21">Discusión</button>
+      <button type="button" data-slide="22">Conclusiones</button>
+      <button type="button" data-slide="23">Referencias</button>
+      <button type="button" data-slide="24">Archivos</button>
     </nav>
   </aside>
   <main class="main">
@@ -482,9 +483,9 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide cover active" id="portada">
       <div class="cover-content">
         <div>
-          <div class="eyebrow">Asignatura: Economía de Minas · Taller 4</div>
-          <h2>Predicción y simulación del precio del oro con LightGBM + Optuna</h2>
-          <p class="subtitle">Dashboard académico para analizar escenarios del commodity oro mediante series financieras, variables multivariadas y simulación Monte Carlo.</p>
+          <div class="eyebrow">Asignatura: Economía de Minas · Taller 5</div>
+          <h2>Modelo multivariado de Machine Learning para la predicción y simulación del precio del oro</h2>
+          <p class="subtitle">LightGBM optimizado con Optuna y simulación Monte Carlo para escenarios del commodity oro.</p>
           <p class="cover-intro">Este dashboard presenta un flujo reproducible de Machine Learning para estimar el comportamiento del precio del oro. El análisis combina datos históricos, variables técnicas, precios de la plata, referencias NI 43-101 y variables macroeconómicas. El modelo final LightGBM + Optuna genera retornos base, que posteriormente se transforman en trayectorias de precio mediante simulación Monte Carlo.</p>
           <div class="cover-meta">
             <div class="meta-card"><span>Autores</span><strong>Alejandro Ramírez Polo y Leidy Paola Patiño Muñoz</strong></div>
@@ -509,12 +510,24 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       </div>
     </section>
 
-    <section class="slide" id="resumen">
-      <div class="hero">
-        <span class="tag">Resumen ejecutivo</span>
-        <h2>Modelo multivariado del precio del oro</h2>
-      <p>Resultados de Machine Learning, validación temporal, importancia de variables, pronósticos por escenarios y simulación Monte Carlo. La selección principal se hizo por menor RMSE promedio de validación temporal.</p>
-        <div class="kpi-grid">{kpis}</div>
+    <section class="slide" id="abstract">
+      <span class="tag">Abstract</span>
+      <h2>Resumen y palabras clave</h2>
+      <div class="grid-2">
+        <div class="method-card"><strong>Abstract</strong><br>Este trabajo presenta un modelo multivariado de Machine Learning para predecir y simular el precio del oro a partir de información histórica del XAU/USD, precios de la plata, precios utilizados en reportes NI 43-101 y variables macroeconómicas disponibles. El objetivo supervisado fue el log-retorno del precio de cierre del oro al siguiente día hábil. En la versión mejorada se compararon varios algoritmos y el modelo seleccionado por menor RMSE promedio en validación temporal fue LightGBM optimizado con Optuna. Finalmente, se construyeron escenarios de simulación Monte Carlo hasta 2035, los cuales deben interpretarse como trayectorias posibles y no como precios exactos garantizados.</div>
+        <div class="method-card"><strong>Palabras clave</strong><br>Oro; commodity metálico; Machine Learning; LightGBM; Optuna; Monte Carlo; log-retornos; series financieras; NI 43-101; predicción de precios.</div>
+      </div>
+      <h3>Indicadores principales</h3>
+      <div class="kpi-grid">{kpis}</div>
+    </section>
+
+    <section class="slide" id="introduccion-general">
+      <span class="tag">Introducción</span>
+      <h2>Problema y motivación</h2>
+      <p class="lead">El precio del oro es una variable relevante para la evaluación económica de proyectos mineros, la estimación de recursos y reservas, la planeación financiera y el análisis de riesgo. Su comportamiento depende de factores financieros, macroeconómicos y de mercado, como tasas de interés, inflación, dólar, volatilidad, precios de metales relacionados y expectativas de inversión. Por esta razón, el proyecto busca construir un modelo multivariado que permita analizar el comportamiento histórico del oro y generar escenarios de simulación para apoyar la interpretación económica del commodity.</p>
+      <div class="grid-2">
+        <div class="method-card"><strong>Objetivo general</strong><br>Construir, validar y documentar un modelo multivariado de Machine Learning para estimar el comportamiento del precio del oro y generar escenarios de simulación hasta 2035.</div>
+        <div class="method-card"><strong>Enfoque del trabajo</strong><br>El modelo no entrega un precio futuro exacto. Produce retornos estimados y escenarios simulados que sirven para análisis de sensibilidad, comparación metodológica y discusión económica.</div>
       </div>
     </section>
 
@@ -847,7 +860,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
         <button type="button" id="next">Siguiente</button>
       </div>
       <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
-      <div class="counter" id="counter">1 / 24</div>
+      <div class="counter" id="counter">1 / 25</div>
     </div>
   </main>
 </div>

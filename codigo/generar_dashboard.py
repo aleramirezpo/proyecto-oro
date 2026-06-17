@@ -353,7 +353,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Predicción del precio del oro</title>
+  <title>Predicción y simulación del precio del oro</title>
   <script>
     window.MathJax = {{ tex: {{ inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }}, svg: {{ fontCache: 'global' }} }};
   </script>
@@ -455,11 +455,11 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <button type="button" data-slide="1">Resumen ejecutivo</button>
       <button type="button" data-slide="2">Contexto oro</button>
       <button type="button" data-slide="3">Objetivos</button>
-      <button type="button" data-slide="4">Marco teórico</button>
-      <button type="button" data-slide="5">Método tradicional</button>
-      <button type="button" data-slide="6">XGBoost</button>
-      <button type="button" data-slide="7">Hiperparámetros</button>
-      <button type="button" data-slide="8">Ecuaciones</button>
+      <button type="button" data-slide="4">Series financieras</button>
+      <button type="button" data-slide="5">Modelo final</button>
+      <button type="button" data-slide="6">LightGBM vs XGBoost</button>
+      <button type="button" data-slide="7">Optuna</button>
+      <button type="button" data-slide="8">Variables y ecuaciones</button>
       <button type="button" data-slide="9">Materiales y métodos</button>
       <button type="button" data-slide="10">Flujo metodológico</button>
       <button type="button" data-slide="11">Variables</button>
@@ -483,23 +483,25 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <div class="cover-content">
         <div>
           <div class="eyebrow">Asignatura: Economía de Minas · Taller 4</div>
-          <h2>Predicción del precio del oro: método tradicional vs Machine Learning</h2>
-          <p class="subtitle">Entregable académico para contrastar un enfoque tendencial tradicional con modelos de Machine Learning aplicados a la proyección del commodity oro.</p>
-          <p class="cover-intro">Este entregable presenta una comparación metodológica entre una regresión polinómica como referencia tradicional y modelos basados en árboles. La versión final del proyecto conserva la evaluación ampliada de algoritmos y selecciona LightGBM + Optuna por validación temporal, sin interpretar los escenarios como precios garantizados.</p>
+          <h2>Predicción y simulación del precio del oro con LightGBM + Optuna</h2>
+          <p class="subtitle">Dashboard académico para analizar escenarios del commodity oro mediante series financieras, variables multivariadas y simulación Monte Carlo.</p>
+          <p class="cover-intro">Este dashboard presenta un flujo reproducible de Machine Learning para estimar el comportamiento del precio del oro. El análisis combina datos históricos, variables técnicas, precios de la plata, referencias NI 43-101 y variables macroeconómicas. El modelo final LightGBM + Optuna genera retornos base, que posteriormente se transforman en trayectorias de precio mediante simulación Monte Carlo.</p>
           <div class="cover-meta">
             <div class="meta-card"><span>Autores</span><strong>Alejandro Ramírez Polo y Leidy Paola Patiño Muñoz</strong></div>
             <div class="meta-card"><span>Profesor</span><strong>Jheyson Bedoya</strong></div>
           </div>
         </div>
-        <img class="logo-unal" src="assets/img/logo-unal.png" alt="Universidad Nacional de Colombia">
+        <img class="logo-unal" src="assets/img/logoun.jpg" alt="Universidad Nacional de Colombia">
       </div>
       <div class="summary-strip">
         <div><span>Commodity</span><strong>Oro</strong></div>
         <div><span>Unidad</span><strong>USD/oz</strong></div>
-        <div><span>Horizonte</span><strong>10 años</strong></div>
-        <div><span>Método tradicional</span><strong>Regresión polinómica</strong></div>
-        <div><span>Machine Learning</span><strong>XGBoost / LightGBM</strong></div>
-        <div><span>Escenario central</span><strong>P50</strong></div>
+        <div><span>Serie base</span><strong>XAU/USD</strong></div>
+        <div><span>Modelo final</span><strong>LightGBM + Optuna</strong></div>
+        <div><span>Variable objetivo</span><strong>Log-retorno diario</strong></div>
+        <div><span>Horizonte</span><strong>Hasta 2035</strong></div>
+        <div><span>Simulación</span><strong>Monte Carlo</strong></div>
+        <div><span>Escenarios</span><strong>Base, crisis y optimista</strong></div>
       </div>
       <div class="cover-footer">
         <div><strong>Universidad Nacional de Colombia</strong><span>Facultad de Minas - Sede Medellín</span></div>
@@ -519,11 +521,14 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide" id="introduccion">
       <span class="tag">Contexto</span>
       <h2>Contexto del commodity oro</h2>
-      <p class="lead">El precio del oro es una variable relevante para la evaluación económica de proyectos mineros, la estimación de recursos y reservas, la planeación financiera y el análisis de riesgo. Su comportamiento depende de factores financieros, macroeconómicos y de mercado, entre ellos tasas de interés, inflación, dólar, volatilidad, precios de metales relacionados y expectativas de inversión.</p>
+      <p class="lead">El oro es un commodity metálico de alta relevancia económica, financiera y minera. Su precio se utiliza en evaluación de proyectos, estimación de recursos y reservas, análisis de sensibilidad, planeación financiera y gestión de riesgo. A diferencia de otros minerales industriales, el oro también funciona como activo refugio, por lo que su comportamiento depende tanto de variables mineras como de condiciones macroeconómicas y financieras.</p>
       <div class="grid-3">
-        <div class="method-card"><strong>Commodity metálico</strong><br>El oro se negocia internacionalmente como activo financiero, reserva de valor e insumo relevante para análisis minero.</div>
-        <div class="method-card"><strong>Horizonte histórico</strong><br>La base del proyecto cubre el precio del oro entre 2016 y 2026, junto con variables de mercado relacionadas.</div>
-        <div class="method-card"><strong>Uso esperado</strong><br>Los resultados se interpretan como pronóstico condicional y distribución de escenarios posibles, no como precio exacto e invariable.</div>
+        <div class="method-card"><strong>Uso minero</strong><br>Evaluación de proyectos, recursos, reservas y sensibilidad económica.</div>
+        <div class="method-card"><strong>Uso financiero</strong><br>Activo refugio y reserva de valor en periodos de incertidumbre.</div>
+        <div class="method-card"><strong>Sensibilidad económica</strong><br>Tasas, dólar, inflación, volatilidad y apetito por riesgo.</div>
+        <div class="method-card"><strong>Relación con metales</strong><br>La plata aporta información sobre la dinámica conjunta de metales preciosos.</div>
+        <div class="method-card"><strong>Horizonte histórico</strong><br>La base del proyecto cubre el precio del oro entre 2016 y 2026.</div>
+        <div class="method-card"><strong>Uso esperado</strong><br>Escenarios de sensibilidad, no precios exactos ni garantizados.</div>
       </div>
     </section>
 
@@ -544,63 +549,85 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     </section>
 
     <section class="slide" id="marco-teorico">
-      <span class="tag">Marco teórico</span>
+      <span class="tag">Series financieras</span>
       <h2>Predicción de series financieras</h2>
-      <p class="lead">Las series financieras suelen presentar ruido, cambios de tendencia, volatilidad variable y dependencia temporal. Por ello, se modeló el log-retorno de un día adelante en lugar de predecir directamente el nivel del precio.</p>
-      <div class="grid-3">
-        <div class="method-card"><strong>Boosting</strong><br>LightGBM y XGBoost construyen árboles secuenciales que corrigen errores residuales.</div>
-        <div class="method-card"><strong>Ensambles</strong><br>Random Forest y Extra Trees combinan múltiples árboles para capturar relaciones no lineales.</div>
-        <div class="method-card"><strong>Optuna</strong><br>Busca hiperparámetros automáticamente minimizando el RMSE de validación temporal.</div>
+      <p class="lead">Las series financieras suelen presentar ruido, cambios de tendencia, volatilidad variable y dependencia temporal. Por esta razón, el modelo no predice directamente el precio en nivel, sino el log-retorno del oro al siguiente día hábil. Esta transformación permite trabajar con cambios relativos y reduce el riesgo de que el modelo aprenda únicamente una tendencia creciente del precio.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[r_{{t+1}}=\ln\left(\frac{{P_{{t+1}}}}{{P_t}}\right)\]\[\hat{{P}}_{{t+1}}=P_t\exp(\hat{{r}}_{{t+1}})\]<p>El retorno estimado se transforma nuevamente en precio mediante una función exponencial.</p></div>
+        <div class="method-card"><strong>Variables de la formulación</strong>
+          <ul class="clean-list">
+            <li>\(P_t\): precio actual del oro.</li>
+            <li>\(P_{{t+1}}\): precio del oro en el siguiente día hábil.</li>
+            <li>\(r_{{t+1}}\): log-retorno real.</li>
+            <li>\(\hat{{r}}_{{t+1}}\): log-retorno estimado por el modelo.</li>
+            <li>\(\hat{{P}}_{{t+1}}\): precio reconstruido a partir del retorno estimado.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <section class="slide" id="metodo-tradicional">
-      <span class="tag">Método tradicional</span>
-      <h2>Regresión polinómica como referencia</h2>
-      <p class="lead">El método tradicional ajusta una curva matemática al precio histórico del oro y luego extrapola esa tendencia hacia el futuro. Su ventaja es la simplicidad e interpretación directa; su limitación es que depende mucho de la forma de la curva y puede volverse rígido en horizontes largos.</p>
+    <section class="slide" id="modelo-final">
+      <span class="tag">Modelo final</span>
+      <h2>LightGBM optimizado con Optuna</h2>
+      <p class="lead">El modelo final seleccionado fue LightGBM optimizado con Optuna, debido a que obtuvo el menor RMSE promedio en validación temporal. XGBoost se conserva como modelo comparativo, ya que fue evaluado en la etapa inicial del trabajo, pero fue superado en la versión mejorada.</p>
       <div class="grid-2">
-        <div class="equation-card">\[P_{{trad}}(t)=\beta_0+\beta_1t+\beta_2t^2\]<p>Ajuste tendencial de segundo grado usado como referencia conceptual.</p></div>
-        <div class="method-card"><strong>Alcance dentro de este entregable</strong><br>No se modifican los resultados numéricos del proyecto. La comparación final disponible en los archivos corresponde a familias de Machine Learning evaluadas con validación temporal; la regresión polinómica se presenta como base metodológica tradicional para interpretación.</div>
+        <div class="equation-card">\[\hat{{r}}_{{t+1}}=F_M(X_t)=F_0(X_t)+\eta\sum_{{m=1}}^M f_m(X_t)\]<p>LightGBM estima el log-retorno futuro usando árboles secuenciales que corrigen errores residuales.</p></div>
+        <div class="method-card"><strong>Lectura del flujo</strong><br>Entrada de variables → árboles secuenciales → retorno predicho → reconstrucción del precio.
+          <ul class="clean-list">
+            <li>\(X_t\): vector de variables disponibles en el día \(t\).</li>
+            <li>\(F_0\): predicción inicial.</li>
+            <li>\(f_m\): árbol número \(m\).</li>
+            <li>\(M\): número total de árboles.</li>
+            <li>\(\eta\): learning rate o tasa de aprendizaje.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <section class="slide" id="metodo-xgboost">
-      <span class="tag">Machine Learning</span>
-      <h2>Método XGBoost</h2>
-      <p class="lead">XGBoost es un algoritmo supervisado basado en un ensamble secuencial de árboles de decisión. Cada árbol corrige parte del error cometido por los árboles anteriores. En este proyecto se comparó XGBoost con otras familias; la versión mejorada seleccionó LightGBM + Optuna por menor RMSE promedio de validación temporal.</p>
+    <section class="slide" id="lightgbm-xgboost">
+      <span class="tag">Comparación conceptual</span>
+      <h2>Diferencia entre LightGBM y XGBoost</h2>
+      <p class="lead">XGBoost y LightGBM pertenecen a la familia de modelos de gradient boosting, pero LightGBM usa una estrategia eficiente de crecimiento por hojas, conocida como <em>leaf-wise growth</em>. En lugar de crecer nivel por nivel, LightGBM busca la hoja donde puede reducir más el error. Esto puede mejorar la precisión, aunque requiere controlar la complejidad con hiperparámetros como <code>num_leaves</code> y <code>min_child_samples</code>.</p>
       <div class="grid-2">
-        <div class="equation-card">\[y_t=\ln\left(\frac{{P_{{t+1}}^{{Au}}}}{{P_t^{{Au}}}}\right)\]\[\hat{{P}}_{{t+1}}^{{Au}}=P_t^{{Au}}\exp(\hat{{y}}_t)\]<p>El modelo predice primero el log-retorno y luego reconstruye el precio.</p></div>
-        <div class="equation-card">\[\hat{{y}}_t=\sum_{{m=1}}^M \eta f_m(x_t)\]<p>\(f_m(x_t)\) es el árbol de decisión número \(m\), \(\eta\) es el learning rate y \(M\) el número total de árboles.</p></div>
+        <div class="method-card"><strong>LightGBM + Optuna</strong><br>Modelo final de la versión mejorada. Se seleccionó por menor RMSE promedio de validación temporal.</div>
+        <div class="method-card"><strong>XGBoost</strong><br>No se elimina del dashboard porque fue parte de la comparación. Debe leerse como modelo evaluado y etapa anterior, no como modelo final.</div>
       </div>
     </section>
 
     <section class="slide" id="hiperparametros">
-      <span class="tag">Configuración</span>
-      <h2>Hiperparámetros principales de XGBoost</h2>
-      <p class="lead">Estos hiperparámetros corresponden a la configuración XGBoost registrada en el código del proyecto y buscan equilibrar capacidad predictiva con control del sobreajuste.</p>
-      <div class="table-wrap">
-        <table class="compact-table">
-          <thead><tr><th>Hiperparámetro</th><th>Valor</th><th>Interpretación</th></tr></thead>
-          <tbody>
-            <tr><td><code>n_estimators</code></td><td>500</td><td>Número de árboles del ensamble.</td></tr>
-            <tr><td><code>max_depth</code></td><td>4</td><td>Profundidad máxima de cada árbol.</td></tr>
-            <tr><td><code>learning_rate</code></td><td>0.03</td><td>Aporte incremental de cada árbol.</td></tr>
-            <tr><td><code>subsample</code></td><td>0.85</td><td>Porcentaje de datos usado por cada árbol.</td></tr>
-            <tr><td><code>alpha</code></td><td>0.02</td><td>Regularización L1.</td></tr>
-            <tr><td><code>lambda</code></td><td>1.40</td><td>Regularización L2.</td></tr>
-          </tbody>
-        </table>
+      <span class="tag">Optimización</span>
+      <h2>Optuna e hiperparámetros finales</h2>
+      <p class="lead">Optuna automatizó la búsqueda de hiperparámetros. Propuso combinaciones, entrenó LightGBM, midió el RMSE mediante validación temporal y seleccionó la configuración con menor error promedio.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[\min_{{\theta}} RMSE_{{CV}}(\theta)\]<p>\(\theta\) representa el conjunto de hiperparámetros y \(RMSE_{{CV}}\) el error promedio obtenido en validación temporal.</p></div>
+        <div class="table-wrap">
+          <table class="compact-table">
+            <thead><tr><th>Hiperparámetro</th><th>Valor</th><th>Interpretación</th></tr></thead>
+            <tbody>
+              <tr><td><code>n_estimators</code></td><td>400</td><td>Número de árboles construidos por el modelo.</td></tr>
+              <tr><td><code>learning_rate</code></td><td>0.0174355</td><td>Peso de cada árbol nuevo; permite aprendizaje gradual.</td></tr>
+              <tr><td><code>num_leaves</code></td><td>38</td><td>Número máximo de hojas por árbol; controla complejidad.</td></tr>
+              <tr><td><code>subsample</code></td><td>0.810038</td><td>Proporción de observaciones usadas en cada árbol.</td></tr>
+              <tr><td><code>colsample_bytree</code></td><td>0.730510</td><td>Proporción de variables usadas por árbol.</td></tr>
+              <tr><td><code>min_child_samples</code></td><td>23</td><td>Mínimo de observaciones necesarias en una hoja.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      <p class="lead">Esta configuración combina muchos árboles con aprendizaje gradual. El número de hojas, el muestreo de datos y el mínimo de observaciones por hoja ayudan a controlar el sobreajuste.</p>
     </section>
 
     <section class="slide" id="ecuaciones">
       <span class="tag">Formulación</span>
-      <h2>Ecuaciones principales</h2>
-      <div class="grid-2">
-        <div class="equation-card">\[r_{{t+1}}=\ln\left(\frac{{P_{{t+1}}}}{{P_t}}\right)\]<p>Log-retorno del precio de cierre del oro.</p></div>
-        <div class="equation-card">\[\hat{{P}}_{{t+1}}=P_t e^{{\hat{{r}}_{{t+1}}}}\]<p>Reconstrucción del precio predicho.</p></div>
-        <div class="equation-card">\[MA_k(t)=\frac{{1}}{{k}}\sum_{{i=0}}^{{k-1}}P_{{t-i}}\]<p>Media móvil simple de ventana \(k\).</p></div>
-        <div class="equation-card">\[\sigma_k(t)=\sqrt{{\frac{{1}}{{k-1}}\sum_{{i=0}}^{{k-1}}\left(r_{{t-i}}-\bar{{r}}_k\right)^2}}\]<p>Volatilidad móvil de retornos recientes.</p></div>
+      <h2>Variables explicativas y ecuaciones</h2>
+      <p class="lead">Las variables explicativas combinan niveles de precios, rezagos, retornos, diferencias, medias móviles, volatilidad, relación oro-plata, información NI 43-101, variables macrofinancieras y calendario.</p>
+      <div class="grid-3">
+        <div class="equation-card">\[Lag_k(t)=P_{{t-k}}\]<p>Rezagos del precio.</p></div>
+        <div class="equation-card">\[R_k(t)=\frac{{P_t}}{{P_{{t-k}}}}-1\]<p>Retorno acumulado de ventana \(k\).</p></div>
+        <div class="equation-card">\[D_k(t)=P_t-P_{{t-k}}\]<p>Diferencia de precios.</p></div>
+        <div class="equation-card">\[MA_k(t)=\frac{{1}}{{k}}\sum_{{i=0}}^{{k-1}}P_{{t-i}}\]<p>Media móvil simple.</p></div>
+        <div class="equation-card">\[\sigma_k(t)=std(R_1(t-k+1),...,R_1(t))\]<p>Volatilidad móvil.</p></div>
+        <div class="equation-card">\[Ratio_{{Au/Ag}}(t)=\frac{{P_{{oro,t}}}}{{P_{{plata,t}}}}\]<p>Relación oro-plata.</p></div>
       </div>
     </section>
 
@@ -640,11 +667,14 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <div class="grid-2">
         <div class="method-card"><strong>Grupos usados</strong>
           <ul class="clean-list">
-            <li>Nivel de precios: oro y plata.</li>
-            <li>Rezagos del precio del oro.</li>
-            <li>Retornos, diferencias, medias móviles y volatilidades.</li>
-            <li>Relación oro-plata.</li>
-            <li>Variables NI 43-101, macrofinancieras y calendario.</li>
+            <li>Nivel de precios: <code>precio_oro</code>, <code>precio_plata</code>.</li>
+            <li>Rezagos: <code>precio_oro_lag_1</code>, <code>precio_oro_lag_20</code>.</li>
+            <li>Retornos y diferencias: <code>retorno_oro_5</code>, <code>diferencia_oro_10</code>.</li>
+            <li>Medias móviles: <code>ma_oro_10</code>, <code>ema_oro_30</code>.</li>
+            <li>Volatilidad: <code>volatilidad_oro_5</code>, <code>volatilidad_plata_10</code>.</li>
+            <li>Relación oro-plata: <code>ratio_oro_plata</code>.</li>
+            <li>NI 43-101: <code>ni_precio_recursos</code>, <code>ni_precio_reservas</code>.</li>
+            <li>Macrofinancieras y calendario: <code>cpi_us</code>, <code>fed_funds</code>, <code>sp500</code>, <code>mes</code>, <code>mes_sin</code>, <code>mes_cos</code>.</li>
           </ul>
         </div>
         <div>{divs[7]}</div>
@@ -653,7 +683,13 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
 
     <section class="slide" id="metricas">
       <span class="tag">Evaluación</span>
-      <h2>Métricas y Monte Carlo</h2>
+      <h2>Métricas del modelo seleccionado</h2>
+      <div class="insights">
+        <div class="insight"><strong>MAE:</strong> {selected_test['MAE']:.4f}. Error absoluto promedio.</div>
+        <div class="insight"><strong>RMSE:</strong> {selected_test['RMSE']:.4f}. Error cuadrático medio; penaliza más los errores grandes.</div>
+        <div class="insight"><strong>MAPE:</strong> {selected_test['MAPE_pct']:.4f}%. Error porcentual promedio.</div>
+        <div class="insight"><strong>R²:</strong> {selected_test['R2']:.4f}. Proporción de variabilidad explicada por el modelo.</div>
+      </div>
       <div class="grid-2">
         <div class="equation-card">\[MAE=\frac{{1}}{{n}}\sum_{{i=1}}^n|y_i-\hat{{y}}_i|\]\[RMSE=\sqrt{{\frac{{1}}{{n}}\sum_{{i=1}}^n(y_i-\hat{{y}}_i)^2}}\]\[MAPE=\frac{{100}}{{n}}\sum_{{i=1}}^n\left|\frac{{y_i-\hat{{y}}_i}}{{y_i}}\right|\]<p>Métricas de error y ajuste fuera de muestra.</p></div>
         <div class="equation-card">\[r_t^{{MC}}=\hat{{r}}_t+\varepsilon_t\sigma_s+J_t\]\[P_t^{{MC}}=P_{{t-1}}^{{MC}}e^{{r_t^{{MC}}}}\]<p>Simulación con choques, volatilidad por escenario y saltos discretos.</p></div>
@@ -675,6 +711,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
         <div class="insight"><strong>Selección:</strong> LightGBM + Optuna fue escogido por menor RMSE en validación temporal.</div>
         <div class="insight"><strong>Contraste:</strong> CatBoost tuvo el menor RMSE de test, pero no se usa para seleccionar a posteriori.</div>
         <div class="insight"><strong>Criterio:</strong> se evita fuga de información y se respeta el orden cronológico.</div>
+        <div class="insight"><strong>Conclusión:</strong> el menor RMSE promedio en validación temporal correspondió a LightGBM + Optuna.</div>
       </div>
       {divs[2]}
       {divs[3]}
@@ -691,7 +728,7 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide" id="variables">
       <span class="tag">Interpretabilidad</span>
       <h2>Variables e interpretabilidad</h2>
-      <p class="lead">El modelo usa variables técnicas del oro, plata, NI 43-101, macrofinancieras y calendario. La importancia muestra que volatilidad y retornos recientes dominan la decisión de los árboles.</p>
+      <p class="lead">El modelo usa variables técnicas del oro, plata, NI 43-101, macrofinancieras y calendario. La importancia de variables muestra que el modelo se apoyó principalmente en tres dimensiones: dinámica propia del oro, relación con la plata y condiciones financieras generales medidas por cambios del S&amp;P 500. La volatilidad reciente del oro aparece como variable dominante, lo que indica que los cambios bruscos recientes condicionan el retorno esperado del siguiente día.</p>
       <div class="two-col">
         <div>{divs[6]}</div>
         <div>{divs[7]}<h3>Top variables</h3><div class="table-wrap">{top_features_table}</div></div>
@@ -701,7 +738,8 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide" id="forecast2026">
       <span class="tag">Pronóstico</span>
       <h2>Pronóstico de corto plazo 2026</h2>
-      <p class="lead">Mayo, junio y julio de 2026 por escenarios. La banda P10-P90 representa incertidumbre simulada y P50 la mediana.</p>
+      <p class="lead">Mayo, junio y julio de 2026 por escenarios. La banda P10-P90 representa incertidumbre simulada y P50 la mediana. Para proyectar hacia adelante, el modelo parte del último precio observado, predice el retorno del siguiente día, reconstruye el precio y usa ese nuevo precio como base para el siguiente paso.</p>
+      <div class="equation-card">\[P_{{t+1}}=P_t\exp(\hat{{r}}_{{t+1}})\]<p>Este procedimiento permite extender la trayectoria hasta 2035, pero también acumula incertidumbre porque cada precio futuro depende del precio estimado o simulado anterior.</p></div>
       {divs[8]}
       <h3>Resumen mensual</h3><div class="table-wrap">{monthly_table}</div>
     </section>
@@ -709,7 +747,11 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
     <section class="slide" id="montecarlo">
       <span class="tag">Simulación</span>
       <h2>Monte Carlo hasta 2035</h2>
-      <p class="lead">Escenarios de largo plazo. No son valores deterministas: muestran distribuciones posibles bajo supuestos de retorno, volatilidad y saltos.</p>
+      <p class="lead">Después de obtener el retorno base del modelo LightGBM, la simulación Monte Carlo agrega incertidumbre mediante choques aleatorios, volatilidad del escenario y saltos ocasionales. Por eso no se obtiene un único precio futuro, sino muchas trayectorias posibles.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[r_t^{{MC}}=\hat{{r}}_t+\epsilon_t\sigma_s+J_t\]\[P_t^{{MC}}=P_{{t-1}}^{{MC}}\exp(r_t^{{MC}})\]<p>\(\hat{{r}}_t\) es el retorno base predicho por LightGBM, \(\epsilon_t\) el choque aleatorio, \(\sigma_s\) la volatilidad ajustada por escenario y \(J_t\) un salto ocasional.</p></div>
+        <div class="method-card"><strong>Cómo leer los escenarios</strong><br>El escenario base, crisis y optimista no son precios garantizados. Son trayectorias centrales derivadas de simulaciones bajo supuestos diferentes de volatilidad e incertidumbre.</div>
+      </div>
       <div class="insights">
         <div class="insight"><strong>P10:</strong> escenario bajo. El 10% de las simulaciones queda por debajo de ese valor.</div>
         <div class="insight"><strong>P50:</strong> escenario central o mediano. No garantiza el precio futuro; resume la trayectoria central de simulación.</div>
@@ -723,8 +765,25 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
 
     <section class="slide" id="trayectoria">
       <span class="tag">Simulación individual</span>
-      <h2>Una trayectoria Monte Carlo</h2>
-      <p class="lead">La línea roja es una sola ruta posible. Se calcula con el retorno base de LightGBM, choques Monte Carlo y la fórmula acumulada de precios.</p>
+      <h2>Ejemplo de una trayectoria individual Monte Carlo</h2>
+      <p class="lead">La línea roja representa una sola trayectoria simulada bajo el escenario base. No corresponde al pronóstico central ni a la mediana. Es una posible ruta del precio generada al sumar al retorno base de LightGBM choques aleatorios, volatilidad histórica/residual y saltos ocasionales.</p>
+      <div class="grid-2">
+        <div class="equation-card">\[u_t=\phi u_{{t-1}}+\sqrt{{1-\phi^2}}z_t\]\[J_t=\eta_t\;\text{{con probabilidad }}p,\;0\;\text{{con probabilidad }}1-p\]\[r_t^{{MC}}=\hat{{r}}_t+u_t\sigma_s+J_t\]\[P_t^{{MC}}=P_{{t-1}}^{{MC}}\exp(r_t^{{MC}})\]<p>La trayectoria única combina persistencia de choques, saltos ocasionales y reconstrucción exponencial del precio.</p></div>
+        <div class="method-card"><strong>Parámetros del escenario base</strong>
+          <ul class="clean-list">
+            <li>Multiplicador de volatilidad: 1.00.</li>
+            <li>Probabilidad de salto diario: 0.004.</li>
+            <li>Media del salto: 0.0000.</li>
+            <li>Desviación del salto: 0.0045.</li>
+            <li>Persistencia de choques \(\phi\): 0.30.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="insights">
+        <div class="insight"><strong>Ejemplo numérico:</strong> \(P_0=4719.285\) USD/oz, \(\hat{{r}}_1=0.001800\), choque \(-0.018433\), \(r_1^{{MC}}=-0.016633\), y \(P_1^{{MC}}=4719.285\exp(-0.016633)=4641.44\) USD/oz.</div>
+        <div class="insight"><strong>Interpretación:</strong> la caída inicial se explica porque el choque aleatorio negativo fue mayor que el retorno base positivo del modelo.</div>
+        <div class="insight"><strong>Lectura de bandas:</strong> si la línea roja se acerca a P90 está en la parte alta de la distribución; si baja hacia P10 está en la parte baja. Si sale de la banda P10-P90, representa un comportamiento menos común bajo los supuestos del escenario.</div>
+      </div>
       {divs[11]}
     </section>
 
@@ -744,9 +803,11 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <h2>Conclusiones</h2>
       <div class="insights">
         <div class="insight">Se construyó un flujo reproducible de Machine Learning para el precio del oro, respetando el orden temporal.</div>
-        <div class="insight">La versión inicial basada en XGBoost fue mejorada con comparación amplia de algoritmos y optimización de hiperparámetros.</div>
-        <div class="insight">El modelo seleccionado por validación temporal fue LightGBM optimizado con Optuna, con MAPE de 1.1323% en test.</div>
-        <div class="insight">La simulación Monte Carlo permitió generar bandas de incertidumbre y escenarios hasta 2035 útiles para análisis económico y sensibilidad en proyectos mineros.</div>
+        <div class="insight">LightGBM + Optuna fue el modelo final seleccionado por menor RMSE promedio en validación temporal.</div>
+        <div class="insight">El modelo predice log-retornos, no precios directamente; los precios futuros se reconstruyen usando una función exponencial.</div>
+        <div class="insight">Monte Carlo permite pasar de una predicción puntual a una distribución de escenarios.</div>
+        <div class="insight">La trayectoria única es solo una posible ruta, no la predicción central.</div>
+        <div class="insight">Los resultados a 2035 deben interpretarse como escenarios de sensibilidad, no como precios garantizados.</div>
       </div>
     </section>
 
@@ -757,9 +818,11 @@ def build_dashboard(data: dict[str, pd.DataFrame]) -> str:
       <div class="reference-list">
         <div>Chen, T. y Guestrin, C. (2016). <em>XGBoost: A scalable tree boosting system</em>. Proceedings of KDD.</div>
         <div>Ke, G. et al. (2017). <em>LightGBM: A highly efficient gradient boosting decision tree</em>. NeurIPS.</div>
+        <div>Akiba, T. et al. (2019). <em>Optuna: A next-generation hyperparameter optimization framework</em>. KDD.</div>
         <div>Prokhorenkova, L. et al. (2018). <em>CatBoost: unbiased boosting with categorical features</em>. NeurIPS.</div>
         <div>Hyndman, R. y Athanasopoulos, G. (2021). <em>Forecasting: Principles and Practice</em>.</div>
         <div>Canadian Securities Administrators. (2014). <em>National Instrument 43-101 Standards of Disclosure for Mineral Projects</em>.</div>
+        <div>Fuentes del proyecto: serie histórica XAU/USD, precio de la plata, referencias NI 43-101 y variables macroeconómicas disponibles.</div>
         <div>Universidad Nacional de Colombia. Guía de identidad visual: <a href="https://identidad.unal.edu.co/guia-identidad-visual/" target="_blank" rel="noopener">identidad.unal.edu.co</a>.</div>
       </div>
     </section>

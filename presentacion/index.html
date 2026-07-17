@@ -91,6 +91,9 @@
   table.tight th{padding:5px 10px}
   ul.b.compact{gap:10px}
   ul.b.compact li{font-size:16.5px; line-height:1.42}
+  .stats.mini .stat{padding:10px 16px; min-width:130px}
+  .stats.mini .v{font-size:24px}
+  .stats.mini .l{font-size:11px; margin-top:4px}
 
   .stats{display:flex; gap:16px; flex-wrap:wrap}
   .stat{
@@ -732,9 +735,9 @@
 <section class="slide" data-title="Tres escenarios a 2035">
   <div class="kicker">Escenarios</div>
   <h2>Tres futuros condicionales, no tres promesas</h2>
-  <div class="two w46">
+  <div class="two fill" style="grid-template-columns:1fr 1.3fr; align-items:stretch">
     <div>
-      <table>
+      <table class="tight">
         <thead><tr><th>Escenario · año</th><th class="r">P10</th><th class="r">P50</th><th class="r">P90</th></tr></thead>
         <tbody>
           <tr><td colspan="4" style="color:var(--gold); font-size:13px; letter-spacing:.08em; text-transform:uppercase">Base</td></tr>
@@ -747,7 +750,7 @@
           <tr><td>2035</td><td class="r">4 137</td><td class="r">7 959</td><td class="r">14 732</td></tr>
         </tbody>
       </table>
-      <p class="small muted" style="margin-top:12px">USD/oz al cierre de cada año. Para proyectos mineros: <b>P50</b> como referencia central de ingresos, <b>P10</b> como escenario conservador para deuda y liquidez, <b>P90</b> como sensibilidad favorable — nunca como precio garantizado.</p>
+      <p class="muted" style="margin-top:12px; font-size:14px">USD/oz al cierre de cada año. Para proyectos mineros: <b>P50</b> como referencia central de ingresos, <b>P10</b> como escenario conservador para deuda y liquidez, <b>P90</b> como sensibilidad favorable — nunca como precio garantizado.</p>
     </div>
     <div class="figwrap">
       <div class="fig fill"><img src="figuras/f17_escenarios_p50_promedio.png" alt="P50 y promedio por escenario"></div>
@@ -770,7 +773,7 @@
       <div class="figcap">Corto plazo (jul–dic 2026, escenario base): P50 a diciembre de <b>4 378</b> USD/oz, banda 3 712–5 187.</div>
     </div>
   </div>
-  <div class="stats" style="margin-top:12px">
+  <div class="stats mini" style="margin-top:10px">
     <div class="stat"><div class="v">79.3<small>%</small></div><div class="l">cobertura empírica P10–P90 (nominal: 80%)</div></div>
     <div class="stat"><div class="v">6.00<small>%</small></div><div class="l">MAPE del P50 (vs 6.40% del promedio)</div></div>
     <div class="stat"><div class="v">P50</div><div class="l">mejor trayectoria central en los tres escenarios</div></div>

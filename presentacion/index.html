@@ -87,6 +87,8 @@
     background:var(--gold-dim); color:var(--gold-bright); font-weight:600;
   }
   tr.hl td:first-child{border-left:3px solid var(--gold)}
+  table.tight td{padding:5px 10px; font-size:14px}
+  table.tight th{padding:5px 10px}
 
   .stats{display:flex; gap:16px; flex-wrap:wrap}
   .stat{
@@ -556,10 +558,10 @@
 <!-- ═══════════ 15 · WALK-FORWARD RESULTADOS ═══════════ -->
 <section class="slide" data-title="Resultados: validación walk-forward">
   <div class="kicker">Resultados</div>
-  <h2>Validación walk-forward: LightGBM + Optuna gana entre los ML</h2>
+  <h2>Walk-forward: gana LightGBM + Optuna</h2>
   <div class="two w46">
     <div>
-      <table>
+      <table class="tight">
         <thead><tr><th>Modelo</th><th class="r">RMSE retorno (%)</th><th class="r">RMSE precio (USD)</th></tr></thead>
         <tbody>
           <tr><td>Naive (deriva)</td><td class="r">1.1383</td><td class="r">13.61</td></tr>
@@ -580,7 +582,7 @@
       <div class="figcap">RMSE por partición: la ventana con COVID-19 fue la más difícil para casi todos los modelos.</div>
     </div>
   </div>
-  <div class="callout" style="margin-top:12px">Optuna redujo el error de LightGBM de <b>1.2674% → 1.1384%</b> (≈ −10%) y estabilizó el desempeño. El rango total es estrecho: la señal explotable a un día es limitada.</div>
+  <div class="callout" style="margin-top:14px; font-size:16px">Optuna redujo el error de LightGBM de <b>1.2674% → 1.1384%</b> (≈ −10%) y estabilizó el desempeño. El rango total es estrecho: la señal explotable a un día es limitada.</div>
 </section>
 
 <!-- ═══════════ 16 · TEST FUERA DE MUESTRA ═══════════ -->

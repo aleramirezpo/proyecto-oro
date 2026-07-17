@@ -68,7 +68,7 @@
     box-shadow:0 8px 30px rgba(0,0,0,.45);
     display:flex; flex-direction:column; min-height:0;
   }
-  .fig img{width:100%; height:100%; object-fit:contain; min-height:0; flex:1}
+  .fig img{width:100%; height:100%; object-fit:contain; min-height:0; flex:1; cursor:zoom-in}
   .figcap{
     font-size:13px; color:var(--muted); margin-top:8px; text-align:center; line-height:1.35;
   }
@@ -214,6 +214,29 @@
     background:var(--card); border:1px solid var(--line); border-radius:5px; padding:1px 7px;
     font-family:var(--sans); font-size:12px;
   }
+
+  /* lightbox de zoom para figuras */
+  #lightbox{
+    position:fixed; inset:0; z-index:80; background:rgba(4,6,12,.96);
+    display:none; overflow:hidden; touch-action:none;
+  }
+  #lightbox.open{display:block}
+  #lightbox img{
+    position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform;
+    background:#fff; border-radius:6px; cursor:grab; user-select:none; -webkit-user-drag:none;
+  }
+  #lightbox img.grabbing{cursor:grabbing}
+  #lbclose{
+    position:absolute; top:14px; right:18px; z-index:81; width:40px; height:36px;
+    background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:9px;
+    font-size:17px; cursor:pointer;
+  }
+  #lbclose:hover{border-color:var(--gold); color:var(--gold-bright)}
+  #lbhint{
+    position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:81;
+    color:var(--muted); font-size:13px; background:rgba(10,15,30,.75);
+    padding:6px 14px; border-radius:999px; border:1px solid var(--line); white-space:nowrap;
+  }
 </style>
 </head>
 <body>
@@ -226,6 +249,10 @@
   <button id="bNext" title="Siguiente (→)">→</button>
   <button id="bToc" title="Índice (Esc)">☰</button>
   <button id="bFull" title="Pantalla completa (F)">⛶</button>
+</div>
+<div id="lightbox">
+  <button id="lbclose" title="Cerrar (Esc)">✕</button>
+  <div id="lbhint">Rueda del ratón: zoom · arrastrar: mover · doble clic: ajustar · Esc o clic afuera: cerrar</div>
 </div>
 <div id="toc"><h3><span>Índice</span> de la presentación</h3><div id="tocgrid"></div>
   <p id="tochint">Navega con <kbd>←</kbd> <kbd>→</kbd> o deslizando · <kbd>Esc</kbd> abre y cierra este índice · <kbd>F</kbd> pantalla completa · <kbd>Inicio</kbd>/<kbd>Fin</kbd> saltan a portada y referencias.</p>
@@ -883,8 +910,63 @@
     toc.classList.toggle('open', open===undefined ? !toc.classList.contains('open') : open);
   }
 
+  // ── lightbox de zoom para figuras ──
+  const lb=document.getElementById('lightbox');
+  let lbImg=null, lbS=1, lbX=0, lbY=0;
+  const lbOpen=()=>lb.classList.contains('open');
+  function lbApply(){ if(lbImg) lbImg.style.transform=`translate(${lbX}px,${lbY}px) scale(${lbS})`; }
+  function lbFit(){
+    if(!lbImg) return;
+    const w=lbImg.naturalWidth, h=lbImg.naturalHeight;
+    lbS=Math.min(innerWidth*0.94/w, innerHeight*0.88/h);
+    lbX=(innerWidth-w*lbS)/2; lbY=(innerHeight-h*lbS)/2;
+    lbApply();
+  }
+  function openLb(src, alt){
+    if(lbImg) lbImg.remove();
+    lbImg=document.createElement('img');
+    lbImg.src=src; lbImg.alt=alt||'';
+    lb.appendChild(lbImg);
+    lb.classList.add('open');
+    if(lbImg.complete) lbFit(); else lbImg.onload=lbFit;
+  }
+  function closeLb(){ lb.classList.remove('open'); }
+  document.querySelectorAll('.fig img').forEach(img=>{
+    img.addEventListener('click',()=>openLb(img.src, img.alt));
+  });
+  document.getElementById('lbclose').onclick=closeLb;
+  lb.addEventListener('dblclick',e=>{e.preventDefault(); lbFit();});
+  lb.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const f=e.deltaY<0?1.18:1/1.18;
+    const ns=Math.max(0.2, Math.min(8, lbS*f));
+    // zoom hacia el cursor
+    lbX=e.clientX-(e.clientX-lbX)*(ns/lbS);
+    lbY=e.clientY-(e.clientY-lbY)*(ns/lbS);
+    lbS=ns; lbApply();
+  },{passive:false});
+  let drag=null;
+  lb.addEventListener('pointerdown',e=>{
+    if(e.target.id==='lbclose') return;
+    drag={x:e.clientX, y:e.clientY, ox:lbX, oy:lbY, moved:false, onImg:e.target===lbImg};
+    if(lbImg) lbImg.classList.add('grabbing');
+    lb.setPointerCapture(e.pointerId);
+  });
+  lb.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+    if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true;
+    lbX=drag.ox+dx; lbY=drag.oy+dy; lbApply();
+  });
+  lb.addEventListener('pointerup',e=>{
+    if(drag && !drag.moved && !drag.onImg) closeLb();
+    drag=null;
+    if(lbImg) lbImg.classList.remove('grabbing');
+  });
+
   // teclado
   addEventListener('keydown',e=>{
+    if(lbOpen()){ if(e.key==='Escape'||e.key==='q') closeLb(); return; }
     if(e.key==='Escape'){toggleToc(); return;}
     if(toc.classList.contains('open')) return;
     switch(e.key){
@@ -906,8 +988,9 @@
 
   // gestos táctiles
   let tx=null,ty=null;
-  addEventListener('touchstart',e=>{tx=e.touches[0].clientX; ty=e.touches[0].clientY;},{passive:true});
+  addEventListener('touchstart',e=>{if(lbOpen())return; tx=e.touches[0].clientX; ty=e.touches[0].clientY;},{passive:true});
   addEventListener('touchend',e=>{
+    if(lbOpen()) return;
     if(tx===null) return;
     const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
     if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)) (dx<0?next:prev)();
@@ -917,6 +1000,7 @@
   // rueda del ratón (con freno)
   let wl=0;
   addEventListener('wheel',e=>{
+    if(lbOpen()) return;
     const now=Date.now(); if(now-wl<450) return;
     if(Math.abs(e.deltaY)<20) return;
     wl=now; e.deltaY>0?next():prev();

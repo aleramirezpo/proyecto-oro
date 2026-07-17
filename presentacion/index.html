@@ -94,6 +94,9 @@
   .stats.mini .stat{padding:10px 16px; min-width:130px}
   .stats.mini .v{font-size:24px}
   .stats.mini .l{font-size:11px; margin-top:4px}
+  .figwrap.hug{align-items:center; justify-content:center}
+  .figwrap.hug .fig{flex:0 1 auto; min-height:0; max-width:100%}
+  .figwrap.hug .fig img{flex:1; min-height:0; width:100%; height:100%}
 
   .stats{display:flex; gap:16px; flex-wrap:wrap}
   .stat{
@@ -698,8 +701,8 @@
         <li>En 2026 el RMSE (87 USD) es alto por el <b>nivel del precio</b>; el MAPE queda en el rango turbulento.</li>
       </ul>
     </div>
-    <div class="figwrap">
-      <div class="fig fill"><img src="figuras/f14_pruebas_estres.png" alt="Predicción durante episodios de estrés"></div>
+    <div class="figwrap hug">
+      <div class="fig fill" style="aspect-ratio:2454/2139"><img src="figuras/f14_pruebas_estres.png" alt="Predicción durante episodios de estrés"></div>
       <div class="figcap">Predicción a un paso durante los episodios de estrés y el periodo tranquilo de contraste.</div>
     </div>
   </div>
@@ -716,7 +719,7 @@
     <span class="chip">crisis: vol ×1.4 + <b>saltos Poisson</b></span>
     <span class="chip">optimista: vol ×0.9</span>
   </div>
-  <div class="two w46 fill" style="align-items:stretch">
+  <div class="two fill" style="grid-template-columns:1fr 2fr; align-items:stretch">
     <div>
       <div class="stats" style="flex-direction:column">
         <div class="stat"><div class="v">11 558</div><div class="l">P50 base a 2035 · USD/oz</div></div>
@@ -724,8 +727,8 @@
         <div class="stat"><div class="v">13 536</div><div class="l">promedio 2035 — mayor que el P50 por la asimetría derecha</div></div>
       </div>
     </div>
-    <div class="figwrap">
-      <div class="fig fill"><img src="figuras/f16_montecarlo_base_p50_promedio.png" alt="Escenario base Monte Carlo hasta 2035"></div>
+    <div class="figwrap hug">
+      <div class="fig fill" style="aspect-ratio:2087/1081"><img src="figuras/f16_montecarlo_base_p50_promedio.png" alt="Escenario base Monte Carlo hasta 2035"></div>
       <div class="figcap">Escenario base: trayectorias, P50, promedio y bandas P10–P90 / P25–P75.</div>
     </div>
   </div>

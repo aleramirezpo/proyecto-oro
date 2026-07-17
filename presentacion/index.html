@@ -89,6 +89,8 @@
   tr.hl td:first-child{border-left:3px solid var(--gold)}
   table.tight td{padding:5px 10px; font-size:14px}
   table.tight th{padding:5px 10px}
+  ul.b.compact{gap:10px}
+  ul.b.compact li{font-size:16.5px; line-height:1.42}
 
   .stats{display:flex; gap:16px; flex-wrap:wrap}
   .stat{
@@ -620,7 +622,7 @@
     <div class="stat"><div class="v">52.8<small>%</small></div><div class="l">acierto direccional</div></div>
     <div class="stat"><div class="v">0.139</div><div class="l">p-valor Diebold–Mariano</div></div>
   </div>
-  <div class="two w46 fill" style="align-items:stretch">
+  <div class="two fill" style="grid-template-columns:1fr 1.85fr; align-items:stretch">
     <div class="callout" style="align-self:center">
       El R² alto es esperable a un día. La lectura exigente: <b>no hay evidencia de superioridad frente a la caminata aleatoria</b> (p=0.139). El valor del modelo no está en el trading, sino en la <b>cuantificación de incertidumbre y los escenarios</b>.
     </div>
@@ -635,7 +637,7 @@
 <section class="slide" data-title="Robustez y residuales">
   <div class="kicker">Resultados</div>
   <h2>Por qué se sostiene la elección: generalización y estabilidad</h2>
-  <div class="two w46">
+  <div class="two fill" style="grid-template-columns:1fr 1.35fr; align-items:stretch">
     <div>
       <div class="stats" style="margin-bottom:16px">
         <div class="stat"><div class="v">1.055</div><div class="l">cociente test/train — vs 2.407 del LightGBM base y 2.011 de XGBoost</div></div>
@@ -675,9 +677,9 @@
 <section class="slide" data-title="Pruebas de estrés históricas">
   <div class="kicker">Resultados</div>
   <h2>Crisis históricas: el error escala con la volatilidad, sin colapsar</h2>
-  <div class="two w46">
+  <div class="two fill" style="grid-template-columns:1fr 1.3fr; align-items:stretch">
     <div>
-      <table>
+      <table class="tight">
         <thead><tr><th>Evento</th><th class="r">MAPE (%)</th><th class="r">RMSE (USD)</th><th class="r">Vol. anual (%)</th></tr></thead>
         <tbody>
           <tr><td>Crisis financiera 2008</td><td class="r">1.840</td><td class="r">19.92</td><td class="r">37.8</td></tr>
@@ -687,7 +689,7 @@
           <tr><td>Periodo tranquilo 2017</td><td class="r">0.506</td><td class="r">8.14</td><td class="r">10.4</td></tr>
         </tbody>
       </table>
-      <ul class="b" style="margin-top:16px">
+      <ul class="b compact" style="margin-top:14px">
         <li>Entrenamiento <b>exclusivamente anterior</b> a cada evento: sin ver el futuro.</li>
         <li>De 2017 a 2008, volatilidad y MAPE se multiplican <b>≈ 3.6×</b>: degradación proporcional, no fallo abrupto.</li>
         <li>En 2026 el RMSE (87 USD) es alto por el <b>nivel del precio</b>; el MAPE queda en el rango turbulento.</li>

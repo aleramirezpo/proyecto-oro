@@ -263,13 +263,13 @@
 <section class="slide" data-title="Introducción">
   <div class="kicker">Introducción</div>
   <h2>El oro: cuatro roles a la vez y un precio difícil de predecir</h2>
-  <div class="two w46">
+  <div class="two fill" style="grid-template-columns:1fr 1.35fr; align-items:stretch">
     <div>
-      <div class="chips" style="margin-bottom:18px">
+      <div class="chips" style="margin-bottom:16px">
         <span class="chip">Materia prima</span><span class="chip">Reserva de valor</span>
         <span class="chip">Activo financiero</span><span class="chip">Cobertura / refugio</span>
       </div>
-      <ul class="b">
+      <ul class="b compact">
         <li>Su precio afecta <b>portafolios, reservas de bancos centrales</b> y la planeación de <b>proyectos mineros</b>: ingresos, reservas económicamente explotables y decisiones de inversión.</li>
         <li>La serie es <b>no estacionaria en niveles</b>, con volatilidad agrupada, colas pesadas y rupturas de régimen.</li>
         <li>Los canales macro (tasas, dólar, VIX, plata, petróleo) son <b>no lineales e inestables</b> en el tiempo.</li>
@@ -417,8 +417,8 @@
     <div class="stat"><div class="v">6.79</div><div class="l">curtosis en exceso (colas pesadas)</div></div>
     <div class="stat"><div class="v">−12.1<small>%</small></div><div class="l">peor día · mejor día +8.6%</div></div>
   </div>
-  <div class="two w46" style="align-items:stretch">
-    <ul class="b" style="justify-content:center">
+  <div class="two fill" style="grid-template-columns:1fr 1.5fr; align-items:stretch">
+    <ul class="b compact" style="justify-content:center">
       <li>Jarque–Bera <b>rechaza normalidad</b> (p&lt;0.001): los extremos son mucho más frecuentes que bajo una campana normal.</li>
       <li>ADF: los log-retornos <b>sí son estacionarios</b> (p&lt;0.001) — base válida para el aprendizaje supervisado.</li>
       <li><b>Volatilidad agrupada</b>: los episodios turbulentos llegan en rachas → justifica pruebas de estrés y bandas probabilísticas.</li>

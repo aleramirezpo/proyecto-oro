@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicción del precio del oro con LightGBM + Optuna — Economía de Minas</title>
+<style>
+  :root{
+    --bg:#0a0f1e; --bg2:#0e1526;
+    --ink:#e9ecf5; --muted:#9aa4bb; --faint:#6b7590;
+    --gold:#e3b64c; --gold-bright:#f2cc6f; --gold-dim:rgba(227,182,76,.16);
+    --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(227,182,76,.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(64,98,181,.10), transparent 60%);
+  }
+  #viewport{position:fixed; inset:0; display:grid; place-items:center;}
+  #deck{
+    position:relative; width:1280px; height:720px;
+    transform-origin:center center;
+  }
+  .slide{
+    position:absolute; inset:0; padding:64px 84px 84px;
+    opacity:0; visibility:hidden; transform:translateX(40px);
+    transition:opacity .45s ease, transform .45s ease, visibility .45s;
+    display:flex; flex-direction:column;
+  }
+  .slide.active{opacity:1; visibility:visible; transform:none; z-index:2}
+  .slide.before{transform:translateX(-40px)}
+
+  .kicker{
+    font-size:13px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--gold); font-weight:600; margin-bottom:12px;
+  }
+  h2{
+    font-family:var(--serif); font-weight:600; font-size:38px; line-height:1.15;
+    margin-bottom:24px; letter-spacing:.01em;
+  }
+  h2 .thin{color:var(--muted); font-style:italic}
+  p,li{font-size:20px; line-height:1.5; color:var(--ink)}
+  .muted{color:var(--muted)}
+  .small{font-size:15px}
+  ul.b{list-style:none; display:flex; flex-direction:column; gap:14px}
+  ul.b li{padding-left:26px; position:relative}
+  ul.b li::before{
+    content:""; position:absolute; left:2px; top:.62em; width:9px; height:9px;
+    background:var(--gold); border-radius:2px; transform:rotate(45deg);
+  }
+  ul.b li b{color:var(--gold-bright); font-weight:600}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:36px; flex:1; min-height:0; align-items:start}
+  .two.w64{grid-template-columns:1.05fr 1.5fr}
+  .two.w46{grid-template-columns:1.5fr 1.05fr}
+  .fill{flex:1; min-height:0}
+
+  .fig{
+    background:#fdfdfb; border-radius:12px; padding:10px;
+    box-shadow:0 8px 30px rgba(0,0,0,.45);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .fig img{width:100%; height:100%; object-fit:contain; min-height:0; flex:1}
+  .figcap{
+    font-size:13px; color:var(--muted); margin-top:8px; text-align:center; line-height:1.35;
+  }
+  .figwrap{display:flex; flex-direction:column; min-height:0; height:100%}
+
+  table{border-collapse:collapse; width:100%}
+  th{
+    font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    text-align:left; padding:7px 10px; border-bottom:1px solid var(--gold-dim); font-weight:600;
+  }
+  td{
+    font-size:15px; padding:7px 10px; border-bottom:1px solid var(--line); line-height:1.3;
+  }
+  td.r,th.r{text-align:right; font-variant-numeric:tabular-nums}
+  tr.hl td{
+    background:var(--gold-dim); color:var(--gold-bright); font-weight:600;
+  }
+  tr.hl td:first-child{border-left:3px solid var(--gold)}
+
+  .stats{display:flex; gap:16px; flex-wrap:wrap}
+  .stat{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 20px; min-width:150px; flex:1;
+  }
+  .stat .v{font-family:var(--serif); font-size:32px; color:var(--gold-bright); line-height:1.1}
+  .stat .v small{font-size:17px; color:var(--muted); font-family:var(--sans)}
+  .stat .l{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:6px; line-height:1.35}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px;
+  }
+  .callout{
+    border-left:3px solid var(--gold); background:var(--gold-dim);
+    border-radius:0 12px 12px 0; padding:14px 20px; font-size:18px; line-height:1.5;
+  }
+  .chips{display:flex; gap:10px; flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--gold-dim); background:var(--card); border-radius:999px;
+    padding:7px 16px; font-size:15px; color:var(--ink);
+  }
+  .chip b{color:var(--gold-bright)}
+
+  .flow{display:flex; flex-wrap:wrap; gap:14px; align-items:stretch}
+  .fstep{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; width:262px; position:relative;
+  }
+  .fstep .n{
+    font-family:var(--serif); font-size:26px; color:var(--gold); line-height:1;
+  }
+  .fstep h4{font-size:17px; margin:6px 0 4px; font-weight:600}
+  .fstep p{font-size:14px; color:var(--muted); line-height:1.35}
+  .farrow{align-self:center; color:var(--gold); font-size:22px}
+
+  .eq{
+    font-family:var(--serif); font-size:24px; text-align:center; padding:14px 8px;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; line-height:1.5;
+  }
+  .eq i{color:var(--gold-bright)}
+
+  /* portada */
+  .cover{justify-content:center; text-align:center; padding:60px 110px}
+  .cover .rule{width:120px; height:3px; background:var(--gold); margin:26px auto; border-radius:2px}
+  .cover h1{
+    font-family:var(--serif); font-weight:600; font-size:41px; line-height:1.28; letter-spacing:.005em;
+  }
+  .cover h1 em{color:var(--gold-bright); font-style:normal}
+  .authors{display:flex; gap:34px; justify-content:center; margin-top:8px; flex-wrap:wrap}
+  .authors div{text-align:center}
+  .authors .nm{font-size:19px; font-weight:600}
+  .authors .em{font-size:14px; color:var(--gold); margin-top:2px}
+  .covfoot{margin-top:34px; font-size:16px; color:var(--muted); line-height:1.7}
+  .covfoot b{color:var(--ink); font-weight:600}
+
+  /* agenda */
+  .agenda{display:grid; grid-template-columns:1fr 1fr; gap:14px 40px; flex:1; align-content:center}
+  .agenda a{
+    display:flex; gap:16px; align-items:baseline; text-decoration:none; color:var(--ink);
+    padding:12px 16px; border-radius:12px; border:1px solid transparent;
+  }
+  .agenda a:hover{background:var(--card); border-color:var(--gold-dim)}
+  .agenda .n{font-family:var(--serif); font-size:24px; color:var(--gold); min-width:38px}
+  .agenda .t{font-size:20px}
+  .agenda .s{font-size:14px; color:var(--muted); display:block; margin-top:2px}
+
+  /* referencias */
+  .refs{
+    columns:2; column-gap:44px; font-size:11.5px; line-height:1.34; color:var(--muted);
+  }
+  .refs p{font-size:11.5px; line-height:1.34; margin-bottom:6px; break-inside:avoid; color:var(--muted)}
+  .refs b{color:var(--ink); font-weight:600}
+  .refs i{color:#b9c1d4}
+
+  /* HUD */
+  #progress{
+    position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-bright));
+    width:0%; z-index:50; transition:width .3s ease; border-radius:0 2px 2px 0;
+  }
+  #hud{
+    position:fixed; bottom:14px; right:18px; z-index:50; display:flex; gap:8px; align-items:center;
+    font-size:14px; color:var(--muted); user-select:none;
+  }
+  #hud button{
+    background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:9px;
+    width:36px; height:32px; font-size:15px; cursor:pointer;
+  }
+  #hud button:hover{border-color:var(--gold); color:var(--gold-bright)}
+  #counter{min-width:64px; text-align:center; font-variant-numeric:tabular-nums}
+  #brand{
+    position:fixed; bottom:14px; left:18px; z-index:50; font-size:12.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--faint); user-select:none;
+  }
+  #brand b{color:var(--gold); font-weight:600}
+
+  /* TOC overlay */
+  #toc{
+    position:fixed; inset:0; z-index:60; background:rgba(6,9,18,.92); backdrop-filter:blur(6px);
+    display:none; overflow:auto; padding:52px 72px;
+  }
+  #toc.open{display:block}
+  #toc h3{font-family:var(--serif); font-size:26px; margin-bottom:20px}
+  #toc h3 span{color:var(--gold)}
+  #tocgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px 36px}
+  #tocgrid button{
+    display:flex; gap:14px; align-items:baseline; width:100%; text-align:left; cursor:pointer;
+    background:none; border:none; color:var(--ink); padding:9px 12px; border-radius:10px; font-size:16px;
+  }
+  #tocgrid button:hover{background:var(--card)}
+  #tocgrid button.cur{background:var(--gold-dim); color:var(--gold-bright)}
+  #tocgrid .n{color:var(--gold); font-family:var(--serif); min-width:30px; font-size:17px}
+  #tochint{margin-top:22px; font-size:13px; color:var(--faint)}
+  kbd{
+    background:var(--card); border:1px solid var(--line); border-radius:5px; padding:1px 7px;
+    font-family:var(--sans); font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="brand"><b>Economía de Minas</b> · UNAL Medellín</div>
+<div id="hud">
+  <span id="counter">1 / 25</span>
+  <button id="bPrev" title="Anterior (←)">←</button>
+  <button id="bNext" title="Siguiente (→)">→</button>
+  <button id="bToc" title="Índice (Esc)">☰</button>
+  <button id="bFull" title="Pantalla completa (F)">⛶</button>
+</div>
+<div id="toc"><h3><span>Índice</span> de la presentación</h3><div id="tocgrid"></div>
+  <p id="tochint">Navega con <kbd>←</kbd> <kbd>→</kbd> o deslizando · <kbd>Esc</kbd> abre y cierra este índice · <kbd>F</kbd> pantalla completa · <kbd>Inicio</kbd>/<kbd>Fin</kbd> saltan a portada y referencias.</p>
+</div>
+
+<div id="viewport"><div id="deck">
+
+<!-- ═══════════ 1 · PORTADA ═══════════ -->
+<section class="slide cover" data-title="Portada">
+  <div class="kicker">Universidad Nacional de Colombia · Sede Medellín · Economía de Minas</div>
+  <h1>Predicción del precio del oro con <em>LightGBM</em> optimizado mediante <em>Optuna</em>: comparación de once modelos, pruebas de estrés y escenarios Monte&nbsp;Carlo hasta 2035</h1>
+  <div class="rule"></div>
+  <div class="authors">
+    <div><div class="nm">Alejandro Ramírez Polo</div><div class="em">aleramirezpo@unal.edu.co</div></div>
+    <div><div class="nm">Leidy Paola Patiño</div><div class="em">lepatinom@unal.edu.co</div></div>
+    <div><div class="nm">Jheyson Andrés Bedoya</div><div class="em">jabedoyal@unal.edu.co</div></div>
+  </div>
+  <div class="covfoot">
+    Docente: <b>Jheyson Andrés Bedoya</b> · Julio de 2026<br>
+    <span class="small">26 años de datos diarios · 11 modelos · escenarios probabilísticos a 2035</span>
+  </div>
+</section>
+
+<!-- ═══════════ 2 · CONTENIDO ═══════════ -->
+<section class="slide" data-title="Contenido">
+  <div class="kicker">Contenido</div>
+  <h2>Ruta de la presentación</h2>
+  <div class="agenda">
+    <a href="#/3"><span class="n">01</span><span class="t">Introducción<span class="s">El oro y el problema de predicción</span></span></a>
+    <a href="#/4"><span class="n">02</span><span class="t">Estado del arte<span class="s">Tendencias y vacío de investigación</span></span></a>
+    <a href="#/5"><span class="n">03</span><span class="t">Objetivo y preguntas<span class="s">PI1 · PI2 · PI3</span></span></a>
+    <a href="#/6"><span class="n">04</span><span class="t">Marco teórico y modelos<span class="s">Log-retornos, canales macro y once candidatos</span></span></a>
+    <a href="#/8"><span class="n">05</span><span class="t">Datos y caracterización<span class="s">7 series · 6482 días · hechos estilizados</span></span></a>
+    <a href="#/12"><span class="n">06</span><span class="t">Metodología<span class="s">Características, validación walk-forward y Optuna</span></span></a>
+    <a href="#/16"><span class="n">07</span><span class="t">Resultados<span class="s">Selección, robustez, SHAP y estrés</span></span></a>
+    <a href="#/22"><span class="n">08</span><span class="t">Escenarios y conclusiones<span class="s">Monte Carlo 2035, validación retrospectiva y referencias</span></span></a>
+  </div>
+</section>
+
+<!-- ═══════════ 3 · INTRODUCCIÓN ═══════════ -->
+<section class="slide" data-title="Introducción">
+  <div class="kicker">Introducción</div>
+  <h2>El oro: cuatro roles a la vez y un precio difícil de predecir</h2>
+  <div class="two w46">
+    <div>
+      <div class="chips" style="margin-bottom:18px">
+        <span class="chip">Materia prima</span><span class="chip">Reserva de valor</span>
+        <span class="chip">Activo financiero</span><span class="chip">Cobertura / refugio</span>
+      </div>
+      <ul class="b">
+        <li>Su precio afecta <b>portafolios, reservas de bancos centrales</b> y la planeación de <b>proyectos mineros</b>: ingresos, reservas económicamente explotables y decisiones de inversión.</li>
+        <li>La serie es <b>no estacionaria en niveles</b>, con volatilidad agrupada, colas pesadas y rupturas de régimen.</li>
+        <li>Los canales macro (tasas, dólar, VIX, plata, petróleo) son <b>no lineales e inestables</b> en el tiempo.</li>
+        <li>Su papel de refugio <b>no es constante</b>: depende del mercado, el horizonte y el régimen de riesgo.</li>
+      </ul>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f02_oro_eventos.png" alt="Precio histórico del oro y eventos mundiales"></div>
+      <div class="figcap">Precio del oro 2000–2026 y eventos mundiales: crisis de 2008, COVID-19, invasión de Ucrania y la corrección de 2026.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 4 · ESTADO DEL ARTE ═══════════ -->
+<section class="slide" data-title="Estado del arte y vacío">
+  <div class="kicker">Estado del arte</div>
+  <h2>Modelos cada vez más sofisticados, evaluaciones incompletas</h2>
+  <div class="two">
+    <div>
+      <p class="muted" style="margin-bottom:14px">Tres tendencias en la literatura reciente (10 estudios 2022–2026 revisados):</p>
+      <ul class="b">
+        <li>De modelos individuales a <b>híbridos</b>: descomposición de señales + redes profundas + atención.</li>
+        <li>Más predictores: de la memoria del oro a <b>macro, indicadores técnicos y sentimiento de noticias</b>.</li>
+        <li>Giro desde la precisión promedio hacia <b>interpretabilidad e incertidumbre</b>.</li>
+      </ul>
+    </div>
+    <div>
+      <p class="muted" style="margin-bottom:14px">El vacío: cuatro dimensiones que <b style="color:var(--gold-bright)">rara vez se evalúan juntas</b>:</p>
+      <ul class="b">
+        <li>Selección <b>sin fuga de información</b> (validación temporal).</li>
+        <li>Generalización: sobreajuste, <b>ruido</b> y prueba formal frente a un benchmark ingenuo.</li>
+        <li>Comportamiento en <b>crisis históricas</b>.</li>
+        <li>Traducción a <b>escenarios probabilísticos verificables</b>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:10px">Este estudio cubre las cuatro dimensiones en un solo marco reproducible y computacionalmente liviano.</div>
+</section>
+
+<!-- ═══════════ 5 · OBJETIVO Y PREGUNTAS ═══════════ -->
+<section class="slide" data-title="Objetivo y preguntas">
+  <div class="kicker">Objetivo</div>
+  <h2>Un marco multivariado, interpretable y temporalmente consistente</h2>
+  <p style="margin-bottom:24px">Predecir el <b style="color:var(--gold-bright)">log-retorno diario</b> del oro, comparar once modelos bajo un protocolo temporal homogéneo y convertir la predicción puntual en <b style="color:var(--gold-bright)">escenarios probabilísticos de precio hasta 2035</b>.</p>
+  <div style="display:grid; gap:16px">
+    <div class="card"><p><b style="color:var(--gold)">PI1.</b> ¿Qué familia de modelos ofrece el mejor equilibrio entre <b>error de validación temporal, generalización y costo computacional</b>?</p></div>
+    <div class="card"><p><b style="color:var(--gold)">PI2.</b> ¿Qué variables propias y macrofinancieras contribuyen a las predicciones y son <b>coherentes con los canales económicos</b> esperados?</p></div>
+    <div class="card"><p><b style="color:var(--gold)">PI3.</b> ¿Cómo cambia el desempeño en <b>episodios de estrés</b> y qué aportan las <b>bandas probabilísticas</b> frente a una trayectoria puntual?</p></div>
+  </div>
+</section>
+
+<!-- ═══════════ 6 · MARCO TEÓRICO ═══════════ -->
+<section class="slide" data-title="Marco teórico: variable objetivo y canales">
+  <div class="kicker">Marco teórico</div>
+  <h2>Predecir retornos, no niveles — y por canales económicos</h2>
+  <div class="two">
+    <div>
+      <div class="eq">
+        <i>y<sub>t</sub></i> = ln( <i>P<sub>t+1</sub></i> / <i>P<sub>t</sub></i> ) = <i>f</i>(<b>x</b><sub>t</sub>) + ε<sub>t+1</sub>,&nbsp; <b>x</b><sub>t</sub> ∈ ℝ<sup>41</sup>
+        <div style="font-size:19px; margin-top:8px; color:var(--muted)">precio reconstruido: <i>P̂<sub>t+1</sub></i> = <i>P<sub>t</sub></i> · exp(<i>ŷ<sub>t</sub></i>)</div>
+      </div>
+      <ul class="b" style="margin-top:18px">
+        <li>Los log-retornos son <b>estacionarios</b> (ADF, p&lt;0.001) y comparables en el tiempo.</li>
+        <li>Evita que el modelo se limite a <b>copiar el nivel</b> actual del precio.</li>
+        <li>Regla estricta: <b>cero fuga de información</b> — solo datos disponibles al cierre de <i>t</i>.</li>
+      </ul>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>Variable</th><th>Canal económico</th><th>Relación esperada</th></tr></thead>
+        <tbody>
+          <tr><td>Dólar (DXY)</td><td>Moneda de denominación</td><td>Negativa, según régimen</td></tr>
+          <tr><td>Tesoro 10 años</td><td>Costo de oportunidad</td><td>Negativa</td></tr>
+          <tr><td>VIX</td><td>Estrés e incertidumbre</td><td>Positiva en estrés</td></tr>
+          <tr><td>S&amp;P 500</td><td>Apetito por riesgo</td><td>Negativa o no lineal</td></tr>
+          <tr><td>Plata</td><td>Factor común de metales</td><td>Positiva</td></tr>
+          <tr><td>Petróleo WTI</td><td>Inflación y costos</td><td>Positiva, según régimen</td></tr>
+          <tr><td>Memoria del oro</td><td>Persistencia y riesgo propio</td><td>No lineal</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin-top:10px">Canales, no restricciones de signo: en crisis varios activos defensivos se mueven a la vez — por eso se usan modelos capaces de captar umbrales e interacciones.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 7 · ONCE MODELOS ═══════════ -->
+<section class="slide" data-title="Los once modelos comparados">
+  <div class="kicker">Marco teórico</div>
+  <h2>Once modelos, de lo ingenuo a lo optimizado</h2>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px">
+    <div class="card"><p class="small" style="letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:10px">Referencias ingenuas</p>
+      <p>Caminata aleatoria<br>Deriva histórica</p></div>
+    <div class="card"><p class="small" style="letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:10px">Econométricos</p>
+      <p>ARIMA(1,0,1)<br>Regresión Ridge</p></div>
+    <div class="card"><p class="small" style="letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:10px">Ensambles de árboles</p>
+      <p>Random Forest<br>Extra Trees</p></div>
+    <div class="card"><p class="small" style="letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:10px">Gradient boosting</p>
+      <p>HistGradientBoosting<br>XGBoost · LightGBM<br>CatBoost</p></div>
+  </div>
+  <div class="callout" style="margin-bottom:18px"><b>+ LightGBM optimizado con Optuna</b> — el candidato afinado: crecimiento hoja a hoja para captar interacciones no lineales, con regularización buscada bayesianamente.</div>
+  <ul class="b">
+    <li>Las referencias ingenuas son la <b>vara de medir</b>: en un mercado eficiente, el mejor pronóstico del retorno de mañana es ≈ 0.</li>
+    <li>Un modelo complejo solo agrega valor si <b>reduce el error fuera de muestra de forma consistente</b> frente a reglas simples.</li>
+  </ul>
+</section>
+
+<!-- ═══════════ 8 · DATOS ═══════════ -->
+<section class="slide" data-title="Datos y fuentes">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Siete series diarias, 26 años de historia</h2>
+  <div class="two w46">
+    <div>
+      <table>
+        <thead><tr><th>Serie</th><th>Símbolo</th><th>Rol en el modelo</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>Oro (USD/oz)</td><td>GC=F</td><td>Variable objetivo</td></tr>
+          <tr><td>Plata (USD/oz)</td><td>SI=F</td><td>Factor común de metales</td></tr>
+          <tr><td>Petróleo WTI</td><td>CL=F</td><td>Inflación y energía</td></tr>
+          <tr><td>Índice dólar</td><td>DX-Y.NYB</td><td>Moneda de denominación</td></tr>
+          <tr><td>S&amp;P 500</td><td>^GSPC</td><td>Apetito por riesgo</td></tr>
+          <tr><td>VIX</td><td>^VIX</td><td>Estrés financiero</td></tr>
+          <tr><td>Tesoro 10 años</td><td>^TNX</td><td>Costo de oportunidad</td></tr>
+        </tbody>
+      </table>
+      <div class="stats" style="margin-top:16px">
+        <div class="stat"><div class="v">6 482</div><div class="l">días de negociación</div></div>
+        <div class="stat"><div class="v">2000–26</div><div class="l">ago 2000 → jul 2026 · Yahoo Finance</div></div>
+      </div>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f01_series_historicas.png" alt="Series históricas diarias 2000-2026"></div>
+      <div class="figcap">Las siete series históricas (cada panel con su propia escala).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 9 · HECHOS ESTILIZADOS ═══════════ -->
+<section class="slide" data-title="Hechos estilizados del retorno">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>El retorno del oro: rentable, volátil y nada normal</h2>
+  <div class="stats" style="margin-bottom:16px">
+    <div class="stat"><div class="v">+10.49<small>%</small></div><div class="l">retorno anualizado 2000–2026</div></div>
+    <div class="stat"><div class="v">17.88<small>%</small></div><div class="l">volatilidad anualizada</div></div>
+    <div class="stat"><div class="v">−0.48</div><div class="l">asimetría (caídas más bruscas)</div></div>
+    <div class="stat"><div class="v">6.79</div><div class="l">curtosis en exceso (colas pesadas)</div></div>
+    <div class="stat"><div class="v">−12.1<small>%</small></div><div class="l">peor día · mejor día +8.6%</div></div>
+  </div>
+  <div class="two w46" style="align-items:stretch">
+    <ul class="b" style="justify-content:center">
+      <li>Jarque–Bera <b>rechaza normalidad</b> (p&lt;0.001): los extremos son mucho más frecuentes que bajo una campana normal.</li>
+      <li>ADF: los log-retornos <b>sí son estacionarios</b> (p&lt;0.001) — base válida para el aprendizaje supervisado.</li>
+      <li><b>Volatilidad agrupada</b>: los episodios turbulentos llegan en rachas → justifica pruebas de estrés y bandas probabilísticas.</li>
+    </ul>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f03_retornos_volatilidad_oro.png" alt="Log-retorno diario y volatilidad móvil"></div>
+      <div class="figcap">Log-retorno diario y volatilidad móvil anualizada de 30 días.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 10 · DISTRIBUCIÓN Y CORRELACIONES ═══════════ -->
+<section class="slide" data-title="Distribución y correlaciones">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Colas pesadas y asociaciones que confirman los canales</h2>
+  <div class="two fill" style="align-items:stretch">
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f04_distribucion_retornos_oro.png" alt="Distribución del log-retorno frente a la normal"></div>
+      <div class="figcap">Histograma y Q–Q frente a una normal: los extremos se desvían claramente en ambas colas.</div>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f05_correlacion_retornos.png" alt="Matriz de correlación entre log-retornos"></div>
+      <div class="figcap">Correlaciones de log-retornos: oro–plata es la más alta; VIX y S&amp;P 500 son débiles en promedio, pero útiles vía umbrales e interacciones.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 11 · PREPROCESAMIENTO Y FEATURES ═══════════ -->
+<section class="slide" data-title="Preprocesamiento y 41 características">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Limpieza disciplinada y 41 características sin fuga</h2>
+  <div class="two">
+    <div>
+      <p class="muted" style="margin-bottom:12px">Preprocesamiento</p>
+      <ul class="b">
+        <li>Calendario del <b>oro</b> como referencia; demás series alineadas con <i>forward-fill</i> limitado a <b>5 días hábiles</b>.</li>
+        <li>WTI negativo de abril 2020 <b>acotado</b>; log-retornos recortados a ±50%.</li>
+        <li><b>Ningún precio del oro fue imputado</b>: la variable objetivo usa solo observaciones reales.</li>
+      </ul>
+    </div>
+    <div>
+      <p class="muted" style="margin-bottom:12px">Seis grupos de características (todas calculadas al cierre de <i>t</i>)</p>
+      <table>
+        <tbody>
+          <tr><td><b>Memoria corta</b></td><td>retornos rezagados 1–20 días</td></tr>
+          <tr><td><b>Tendencia</b></td><td>medias móviles, precio/SMA 10–200, momento 21 y 63 días</td></tr>
+          <tr><td><b>Riesgo propio</b></td><td>volatilidad 5–30 días, drawdown 252 días, RSI(14)</td></tr>
+          <tr><td><b>Exógenas</b></td><td>retornos de plata, WTI, DXY y S&amp;P (1 y 5 días); razón oro/plata</td></tr>
+          <tr><td><b>Tasas y estrés</b></td><td>nivel y cambios del Tesoro 10a; VIX y su z-score de 60 días</td></tr>
+          <tr><td><b>Calendario</b></td><td>día y mes codificados con senos y cosenos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 12 · FLUJO METODOLÓGICO ═══════════ -->
+<section class="slide" data-title="Flujo metodológico">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Siete etapas, un protocolo temporal estricto</h2>
+  <div class="flow" style="margin-top:8px">
+    <div class="fstep"><div class="n">1</div><h4>Datos</h4><p>Yahoo Finance: 7 series diarias, 2000–2026.</p></div>
+    <div class="farrow">➜</div>
+    <div class="fstep"><div class="n">2</div><h4>Preprocesamiento</h4><p>Calendario del oro, relleno limitado, control de atípicos.</p></div>
+    <div class="farrow">➜</div>
+    <div class="fstep"><div class="n">3</div><h4>Características</h4><p>41 variables sin fuga de información.</p></div>
+  </div>
+  <div class="flow" style="margin-top:14px">
+    <div class="fstep"><div class="n">4</div><h4>Validación</h4><p>Partición temporal 80/20 y walk-forward.</p></div>
+    <div class="farrow">➜</div>
+    <div class="fstep"><div class="n">5</div><h4>Prueba final</h4><p>RMSE, MAE, MAPE, R², acierto direccional y Diebold–Mariano.</p></div>
+    <div class="farrow">➜</div>
+    <div class="fstep"><div class="n">6</div><h4>Diagnósticos</h4><p>Residuales, sobreajuste, ruido, estrés y SHAP.</p></div>
+  </div>
+  <div class="flow" style="margin-top:14px">
+    <div class="fstep" style="width:540px; border-color:var(--gold-dim); background:var(--gold-dim)"><div class="n">7</div><h4>Escenarios</h4><p>Pronóstico recursivo + simulación Monte Carlo hasta 2035 (P10–P90).</p></div>
+  </div>
+  <p class="small muted" style="margin-top:20px">Implementación: Python 3.13 (pandas, scikit-learn, lightgbm, xgboost, catboost, optuna, shap, statsmodels) · semilla 42 · flujo completo ≈ 2.7 min en un equipo de escritorio.</p>
+</section>
+
+<!-- ═══════════ 13 · PROTOCOLO DE VALIDACIÓN ═══════════ -->
+<section class="slide" data-title="Validación y selección del modelo">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Walk-forward: validar como se usaría en la realidad</h2>
+  <div style="display:flex; border-radius:12px; overflow:hidden; margin-bottom:18px; border:1px solid var(--line)">
+    <div style="width:80%; background:var(--gold-dim); padding:14px 18px">
+      <b style="color:var(--gold-bright)">Entrenamiento · 80%</b><br>
+      <span class="small muted">4 984 días · ago 2001 → 15 jul 2021 · aquí ocurre TODA la selección (walk-forward + Optuna)</span>
+    </div>
+    <div style="width:20%; background:var(--card); padding:14px 18px">
+      <b>Prueba · 20%</b><br>
+      <span class="small muted">1 246 días · jul 2021 → jun 2026 · intocada</span>
+    </div>
+  </div>
+  <ul class="b" style="margin-bottom:18px">
+    <li>Cada partición walk-forward entrena con el pasado y valida sobre un <b>bloque posterior</b> — nunca particiones aleatorias.</li>
+    <li>Métrica de selección definida <b>a priori</b>: RMSE del log-retorno diario.</li>
+  </ul>
+  <div class="chips">
+    <span class="chip">1 · ¿Menor RMSE en walk-forward?</span>
+    <span class="chip">2 · ¿Supera a la caminata aleatoria (Diebold–Mariano)?</span>
+    <span class="chip">3 · ¿Diagnósticos aceptables?</span>
+    <span class="chip" style="border-color:var(--gold); color:var(--gold-bright)"><b>→ modelo final</b></span>
+  </div>
+  <p class="small muted" style="margin-top:14px">Si la prueba DM no es significativa, el modelo se adopta <b>con cautela</b> y se refuerza el uso de bandas de incertidumbre — exactamente lo que ocurrió.</p>
+</section>
+
+<!-- ═══════════ 14 · OPTUNA ═══════════ -->
+<section class="slide" data-title="Optimización con Optuna">
+  <div class="kicker">Materiales y métodos</div>
+  <h2>Optuna: búsqueda bayesiana solo dentro del entrenamiento</h2>
+  <div class="two w46">
+    <div>
+      <ul class="b">
+        <li><b>40 configuraciones</b> evaluadas con el muestreador TPE (búsqueda bayesiana secuencial).</li>
+        <li>Validación interna: <b>TimeSeriesSplit de 3 particiones</b> — el conjunto de prueba jamás participa.</li>
+        <li>Objetivo: minimizar el <b>RMSE del log-retorno</b>; semilla fija 42.</li>
+        <li>Resultado: aprendizaje <b>lento y muy regularizado</b> — muchos árboles pequeños con tasa mínima.</li>
+      </ul>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>Hiperparámetro</th><th class="r">Valor</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>n_estimators</td><td class="r">1 141</td><td>árboles del ensamble</td></tr>
+          <tr><td>learning_rate</td><td class="r">0.00576</td><td>aprendizaje gradual</td></tr>
+          <tr><td>num_leaves</td><td class="r">54</td><td>complejidad por árbol</td></tr>
+          <tr><td>min_child_samples</td><td class="r">5</td><td>datos mínimos por hoja</td></tr>
+          <tr><td>subsample</td><td class="r">0.787</td><td>submuestreo de filas</td></tr>
+          <tr><td>colsample_bytree</td><td class="r">0.693</td><td>submuestreo de columnas</td></tr>
+          <tr><td>reg_alpha (L1)</td><td class="r">0.910</td><td>hojas conservadoras</td></tr>
+          <tr><td>reg_lambda (L2)</td><td class="r">0.00174</td><td>suaviza pesos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 15 · WALK-FORWARD RESULTADOS ═══════════ -->
+<section class="slide" data-title="Resultados: validación walk-forward">
+  <div class="kicker">Resultados</div>
+  <h2>Validación walk-forward: LightGBM + Optuna gana entre los ML</h2>
+  <div class="two w46">
+    <div>
+      <table>
+        <thead><tr><th>Modelo</th><th class="r">RMSE retorno (%)</th><th class="r">RMSE precio (USD)</th></tr></thead>
+        <tbody>
+          <tr><td>Naive (deriva)</td><td class="r">1.1383</td><td class="r">13.61</td></tr>
+          <tr><td>Naive (caminata aleatoria)</td><td class="r">1.1383</td><td class="r">13.61</td></tr>
+          <tr class="hl"><td>LightGBM + Optuna</td><td class="r">1.1384</td><td class="r">13.61</td></tr>
+          <tr><td>Extra Trees</td><td class="r">1.1483</td><td class="r">13.73</td></tr>
+          <tr><td>Random Forest</td><td class="r">1.1571</td><td class="r">13.83</td></tr>
+          <tr><td>CatBoost</td><td class="r">1.1797</td><td class="r">14.10</td></tr>
+          <tr><td>Ridge</td><td class="r">1.1812</td><td class="r">14.06</td></tr>
+          <tr><td>XGBoost</td><td class="r">1.2265</td><td class="r">14.66</td></tr>
+          <tr><td>HistGradientBoosting</td><td class="r">1.2499</td><td class="r">14.92</td></tr>
+          <tr><td>LightGBM (sin optimizar)</td><td class="r">1.2674</td><td class="r">15.13</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f10_cv_walkforward.png" alt="RMSE por partición walk-forward"></div>
+      <div class="figcap">RMSE por partición: la ventana con COVID-19 fue la más difícil para casi todos los modelos.</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:12px">Optuna redujo el error de LightGBM de <b>1.2674% → 1.1384%</b> (≈ −10%) y estabilizó el desempeño. El rango total es estrecho: la señal explotable a un día es limitada.</div>
+</section>
+
+<!-- ═══════════ 16 · TEST FUERA DE MUESTRA ═══════════ -->
+<section class="slide" data-title="Desempeño fuera de muestra">
+  <div class="kicker">Resultados</div>
+  <h2>Prueba 2021–2026: once modelos, diferencias mínimas</h2>
+  <table style="margin-bottom:12px">
+    <thead><tr><th>Modelo</th><th class="r">RMSE (USD)</th><th class="r">MAE (USD)</th><th class="r">MAPE (%)</th><th class="r">R²</th><th class="r">Acierto (%)</th><th class="r">p (DM)</th></tr></thead>
+    <tbody>
+      <tr><td>Random Forest</td><td class="r">40.97</td><td class="r">23.41</td><td class="r">0.819</td><td class="r">0.9982</td><td class="r">55.5</td><td class="r">0.242</td></tr>
+      <tr><td>Extra Trees</td><td class="r">41.16</td><td class="r">23.45</td><td class="r">0.820</td><td class="r">0.9982</td><td class="r">54.1</td><td class="r">0.178</td></tr>
+      <tr><td>Ridge</td><td class="r">41.31</td><td class="r">23.58</td><td class="r">0.829</td><td class="r">0.9982</td><td class="r">53.4</td><td class="r">0.102</td></tr>
+      <tr><td>HistGradientBoosting</td><td class="r">41.61</td><td class="r">24.23</td><td class="r">0.853</td><td class="r">0.9981</td><td class="r">53.9</td><td class="r">0.831</td></tr>
+      <tr><td>CatBoost</td><td class="r">41.64</td><td class="r">23.65</td><td class="r">0.826</td><td class="r">0.9981</td><td class="r">54.2</td><td class="r">0.728</td></tr>
+      <tr class="hl"><td>LightGBM + Optuna</td><td class="r">41.69</td><td class="r">23.51</td><td class="r">0.822</td><td class="r">0.9981</td><td class="r">52.8</td><td class="r">0.139</td></tr>
+      <tr><td>ARIMA(1,0,1)</td><td class="r">41.78</td><td class="r">23.54</td><td class="r">0.823</td><td class="r">0.9981</td><td class="r">54.5</td><td class="r">0.460</td></tr>
+      <tr><td>Naive (deriva)</td><td class="r">41.78</td><td class="r">23.55</td><td class="r">0.823</td><td class="r">0.9981</td><td class="r">54.7</td><td class="r">0.556</td></tr>
+      <tr><td>Naive (caminata aleatoria)</td><td class="r">41.81</td><td class="r">23.62</td><td class="r">0.826</td><td class="r">0.9981</td><td class="r">—</td><td class="r">—</td></tr>
+      <tr><td>LightGBM (sin optimizar)</td><td class="r">41.91</td><td class="r">24.22</td><td class="r">0.854</td><td class="r">0.9981</td><td class="r">53.5</td><td class="r">0.921</td></tr>
+      <tr><td>XGBoost</td><td class="r">42.68</td><td class="r">24.25</td><td class="r">0.850</td><td class="r">0.9980</td><td class="r">52.6</td><td class="r">0.255</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">1 246 observaciones (16 jul 2021 → 30 jun 2026), predicción a un paso. Random Forest logra el menor RMSE puntual, pero la selección se mantuvo <b>a priori</b> por validación — elegir con el test sería fuga de información. Ningún modelo supera a la caminata aleatoria al 5%.</p>
+</section>
+
+<!-- ═══════════ 17 · MODELO GANADOR ═══════════ -->
+<section class="slide" data-title="El modelo seleccionado en prueba">
+  <div class="kicker">Resultados</div>
+  <h2>LightGBM + Optuna en prueba: seguimiento estrecho, lectura honesta</h2>
+  <div class="stats" style="margin-bottom:14px">
+    <div class="stat"><div class="v">41.69</div><div class="l">RMSE · USD/oz</div></div>
+    <div class="stat"><div class="v">23.51</div><div class="l">MAE · USD/oz</div></div>
+    <div class="stat"><div class="v">0.822<small>%</small></div><div class="l">MAPE</div></div>
+    <div class="stat"><div class="v">0.9981</div><div class="l">R² sobre el nivel</div></div>
+    <div class="stat"><div class="v">52.8<small>%</small></div><div class="l">acierto direccional</div></div>
+    <div class="stat"><div class="v">0.139</div><div class="l">p-valor Diebold–Mariano</div></div>
+  </div>
+  <div class="two w46 fill" style="align-items:stretch">
+    <div class="callout" style="align-self:center">
+      El R² alto es esperable a un día. La lectura exigente: <b>no hay evidencia de superioridad frente a la caminata aleatoria</b> (p=0.139). El valor del modelo no está en el trading, sino en la <b>cuantificación de incertidumbre y los escenarios</b>.
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f08_ganador_pred_vs_real.png" alt="Predicción del modelo seleccionado frente al precio real"></div>
+      <div class="figcap">Predicción a un paso y dispersión frente al precio real (2021–2026).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 18 · ROBUSTEZ Y RESIDUALES ═══════════ -->
+<section class="slide" data-title="Robustez y residuales">
+  <div class="kicker">Resultados</div>
+  <h2>Por qué se sostiene la elección: generalización y estabilidad</h2>
+  <div class="two w46">
+    <div>
+      <div class="stats" style="margin-bottom:16px">
+        <div class="stat"><div class="v">1.055</div><div class="l">cociente test/train — vs 2.407 del LightGBM base y 2.011 de XGBoost</div></div>
+        <div class="stat"><div class="v">+0.046<small>%</small></div><div class="l">degradación con ruido del 10% en las entradas</div></div>
+      </div>
+      <ul class="b">
+        <li>Brecha mínima entrenamiento–prueba: <b>sin sobreajuste</b> relevante.</li>
+        <li>Residuales casi insesgados (media <b>+0.85 USD/oz</b>), pero con colas pesadas (curtosis 42.7) y dependencia débil (Ljung–Box p=0.003).</li>
+        <li>Los errores extremos se concentran en la <b>corrección de 2026</b>.</li>
+      </ul>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f11_residuales_ganador.png" alt="Diagnóstico de residuales"></div>
+      <div class="figcap">Evolución temporal, histograma, Q–Q y autocorrelación de los residuales.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 19 · INTERPRETABILIDAD ═══════════ -->
+<section class="slide" data-title="Interpretabilidad: importancia y SHAP">
+  <div class="kicker">Resultados</div>
+  <h2>SHAP: el modelo escucha a los canales económicos correctos</h2>
+  <div class="two fill" style="align-items:stretch">
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f12_importancia_ganador.png" alt="Importancia por ganancia"></div>
+      <div class="figcap">Veinte características con mayor importancia por ganancia.</div>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f13_shap_ganador.png" alt="Resumen SHAP"></div>
+      <div class="figcap">Resumen SHAP: magnitud y dirección de las contribuciones.</div>
+    </div>
+  </div>
+  <p class="small" style="margin-top:12px">Dominan los <b style="color:var(--gold-bright)">cambios de la tasa del Tesoro a 10 años</b>, las <b style="color:var(--gold-bright)">variaciones del VIX</b> y los retornos de S&amp;P 500, DXY y plata, junto con la volatilidad propia del oro y su posición frente a la SMA-200 — coherente con costo de oportunidad, refugio y moneda de denominación. <span class="muted">SHAP explica el modelo; no es causalidad ni significancia.</span></p>
+</section>
+
+<!-- ═══════════ 20 · PRUEBAS DE ESTRÉS ═══════════ -->
+<section class="slide" data-title="Pruebas de estrés históricas">
+  <div class="kicker">Resultados</div>
+  <h2>Crisis históricas: el error escala con la volatilidad, sin colapsar</h2>
+  <div class="two w46">
+    <div>
+      <table>
+        <thead><tr><th>Evento</th><th class="r">MAPE (%)</th><th class="r">RMSE (USD)</th><th class="r">Vol. anual (%)</th></tr></thead>
+        <tbody>
+          <tr><td>Crisis financiera 2008</td><td class="r">1.840</td><td class="r">19.92</td><td class="r">37.8</td></tr>
+          <tr><td>Desplome COVID-19 2020</td><td class="r">1.355</td><td class="r">30.42</td><td class="r">30.0</td></tr>
+          <tr><td>Invasión de Ucrania 2022</td><td class="r">0.885</td><td class="r">21.14</td><td class="r">17.6</td></tr>
+          <tr><td>Corrección del oro 2026</td><td class="r">1.450</td><td class="r">87.35</td><td class="r">29.9</td></tr>
+          <tr><td>Periodo tranquilo 2017</td><td class="r">0.506</td><td class="r">8.14</td><td class="r">10.4</td></tr>
+        </tbody>
+      </table>
+      <ul class="b" style="margin-top:16px">
+        <li>Entrenamiento <b>exclusivamente anterior</b> a cada evento: sin ver el futuro.</li>
+        <li>De 2017 a 2008, volatilidad y MAPE se multiplican <b>≈ 3.6×</b>: degradación proporcional, no fallo abrupto.</li>
+        <li>En 2026 el RMSE (87 USD) es alto por el <b>nivel del precio</b>; el MAPE queda en el rango turbulento.</li>
+      </ul>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f14_pruebas_estres.png" alt="Predicción durante episodios de estrés"></div>
+      <div class="figcap">Predicción a un paso durante los episodios de estrés y el periodo tranquilo de contraste.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 21 · MONTE CARLO ═══════════ -->
+<section class="slide" data-title="Simulación Monte Carlo hasta 2035">
+  <div class="kicker">Escenarios</div>
+  <h2>De la predicción puntual al abanico probabilístico</h2>
+  <div class="chips" style="margin-bottom:14px">
+    <span class="chip"><b>2 000</b> trayectorias por escenario</span>
+    <span class="chip">deriva amortiguada <b>w = e<sup>−t/63</sup></b></span>
+    <span class="chip">σ diaria histórica <b>1.13%</b></span>
+    <span class="chip">crisis: vol ×1.4 + <b>saltos Poisson</b></span>
+    <span class="chip">optimista: vol ×0.9</span>
+  </div>
+  <div class="two w46 fill" style="align-items:stretch">
+    <div>
+      <div class="stats" style="flex-direction:column">
+        <div class="stat"><div class="v">11 558</div><div class="l">P50 base a 2035 · USD/oz</div></div>
+        <div class="stat"><div class="v">5 709 – 23 746</div><div class="l">banda P10–P90 base a 2035</div></div>
+        <div class="stat"><div class="v">13 536</div><div class="l">promedio 2035 — mayor que el P50 por la asimetría derecha</div></div>
+      </div>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f16_montecarlo_base_p50_promedio.png" alt="Escenario base Monte Carlo hasta 2035"></div>
+      <div class="figcap">Escenario base: trayectorias, P50, promedio y bandas P10–P90 / P25–P75.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 22 · TABLA DE ESCENARIOS ═══════════ -->
+<section class="slide" data-title="Tres escenarios a 2035">
+  <div class="kicker">Escenarios</div>
+  <h2>Tres futuros condicionales, no tres promesas</h2>
+  <div class="two w46">
+    <div>
+      <table>
+        <thead><tr><th>Escenario · año</th><th class="r">P10</th><th class="r">P50</th><th class="r">P90</th></tr></thead>
+        <tbody>
+          <tr><td colspan="4" style="color:var(--gold); font-size:13px; letter-spacing:.08em; text-transform:uppercase">Base</td></tr>
+          <tr><td>2026</td><td class="r">3 712</td><td class="r">4 378</td><td class="r">5 187</td></tr>
+          <tr><td>2030</td><td class="r">4 109</td><td class="r">6 783</td><td class="r">11 221</td></tr>
+          <tr class="hl"><td>2035</td><td class="r">5 709</td><td class="r">11 558</td><td class="r">23 746</td></tr>
+          <tr><td colspan="4" style="color:var(--gold); font-size:13px; letter-spacing:.08em; text-transform:uppercase">Crisis / alta incertidumbre</td></tr>
+          <tr><td>2035</td><td class="r">6 971</td><td class="r">19 157</td><td class="r">52 209</td></tr>
+          <tr><td colspan="4" style="color:var(--gold); font-size:13px; letter-spacing:.08em; text-transform:uppercase">Optimista (menor incertidumbre)</td></tr>
+          <tr><td>2035</td><td class="r">4 137</td><td class="r">7 959</td><td class="r">14 732</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin-top:12px">USD/oz al cierre de cada año. Para proyectos mineros: <b>P50</b> como referencia central de ingresos, <b>P10</b> como escenario conservador para deuda y liquidez, <b>P90</b> como sensibilidad favorable — nunca como precio garantizado.</p>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f17_escenarios_p50_promedio.png" alt="P50 y promedio por escenario"></div>
+      <div class="figcap">Evolución del P50 y el promedio en los escenarios base, crisis y optimista.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 23 · RETROSPECTIVA Y CORTO PLAZO ═══════════ -->
+<section class="slide" data-title="Validación retrospectiva y corto plazo">
+  <div class="kicker">Escenarios</div>
+  <h2>El pronóstico anterior, puesto a prueba con datos reales</h2>
+  <div class="two fill" style="align-items:stretch">
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f15_modelo_anterior_vs_real.png" alt="Pronóstico previo frente a precios observados"></div>
+      <div class="figcap">Pronóstico congelado el 8-abr-2026 frente a los 58 precios publicados después.</div>
+    </div>
+    <div class="figwrap">
+      <div class="fig fill"><img src="figuras/f19_corto_plazo_2026.png" alt="Pronóstico de corto plazo jul-dic 2026"></div>
+      <div class="figcap">Corto plazo (jul–dic 2026, escenario base): P50 a diciembre de <b>4 378</b> USD/oz, banda 3 712–5 187.</div>
+    </div>
+  </div>
+  <div class="stats" style="margin-top:12px">
+    <div class="stat"><div class="v">79.3<small>%</small></div><div class="l">cobertura empírica P10–P90 (nominal: 80%)</div></div>
+    <div class="stat"><div class="v">6.00<small>%</small></div><div class="l">MAPE del P50 (vs 6.40% del promedio)</div></div>
+    <div class="stat"><div class="v">P50</div><div class="l">mejor trayectoria central en los tres escenarios</div></div>
+  </div>
+</section>
+
+<!-- ═══════════ 24 · CONCLUSIONES ═══════════ -->
+<section class="slide" data-title="Conclusiones">
+  <div class="kicker">Conclusiones</div>
+  <h2>Menos certeza puntual, más gestión del riesgo</h2>
+  <ul class="b" style="margin-bottom:16px">
+    <li><b>LightGBM + Optuna</b> fue seleccionado por validación temporal: menor RMSE entre los ML, cociente test/train de 1.055, estabilidad ante ruido y reentrenamiento en 0.36 s.</li>
+    <li>En prueba: RMSE 41.69 USD/oz y MAPE 0.822%, pero <b>sin superioridad significativa frente a la caminata aleatoria</b> — la señal diaria del oro es débil.</li>
+    <li>En crisis, la degradación es <b>gradual y proporcional a la volatilidad</b>, no un fallo abrupto.</li>
+    <li>El <b>P50</b> superó al promedio como trayectoria central y la banda P10–P90 cubrió el 79.3% de los datos posteriores.</li>
+  </ul>
+  <div class="two" style="flex:0">
+    <div class="callout"><b>Uso recomendado:</b> análisis de sensibilidad, presupuestación, evaluación de proyectos mineros y gestión del riesgo — con actualización frecuente del pronóstico.</div>
+    <div class="card"><p class="small"><b style="color:var(--gold)">Líneas futuras:</b> colas pesadas (t de Student, valores extremos), variables macro dinámicas y regímenes, tasas reales, flujos de ETF y compras de bancos centrales, sentimiento de noticias, y validación desde múltiples fechas de origen.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════ 25 · REFERENCIAS ═══════════ -->
+<section class="slide" data-title="Referencias">
+  <div class="kicker">Referencias</div>
+  <h2 style="margin-bottom:16px">Referencias <span class="thin">(selección del artículo)</span></h2>
+  <div class="refs">
+    <p><b>Akiba, T. et al.</b> (2019). Optuna: A next-generation hyperparameter optimization framework. <i>Proc. 25th ACM SIGKDD</i>, 2623–2631.</p>
+    <p><b>Amini, A. &amp; Kalantari, R.</b> (2024). Gold price prediction by a CNN-Bi-LSTM model along with automatic parameter tuning. <i>PLOS ONE</i>, 19(3), e0298426.</p>
+    <p><b>Baur, D. G. &amp; Lucey, B. M.</b> (2010). Is gold a hedge or a safe haven? An analysis of stocks, bonds and gold. <i>Financial Review</i>, 45(2), 217–229.</p>
+    <p><b>Baur, D. G. &amp; McDermott, T. K.</b> (2010). Is gold a safe haven? International evidence. <i>Journal of Banking &amp; Finance</i>, 34(8), 1886–1898.</p>
+    <p><b>Bloss, M., Ernst, D. &amp; Geisinger, L.</b> (2025). Extreme value theory and gold price extremes, 1975–2025. <i>Commodities</i>, 4(4), 24.</p>
+    <p><b>Breiman, L.</b> (2001). Random forests. <i>Machine Learning</i>, 45, 5–32.</p>
+    <p><b>Capie, F., Mills, T. C. &amp; Wood, G.</b> (2005). Gold as a hedge against the dollar. <i>J. Int. Financial Markets, Institutions and Money</i>, 15(4), 343–352.</p>
+    <p><b>Chen, T. &amp; Guestrin, C.</b> (2016). XGBoost: A scalable tree boosting system. <i>Proc. 22nd ACM SIGKDD</i>, 785–794.</p>
+    <p><b>Diebold, F. X. &amp; Mariano, R. S.</b> (1995). Comparing predictive accuracy. <i>J. Business &amp; Economic Statistics</i>, 13(3), 253–263.</p>
+    <p><b>Foroutan, P. &amp; Lahmiri, S.</b> (2024). Deep learning systems for forecasting the prices of crude oil, gold, silver, and natural gas. <i>Financial Innovation</i>, 10, 105.</p>
+    <p><b>Friedman, J. H.</b> (2001). Greedy function approximation: A gradient boosting machine. <i>Annals of Statistics</i>, 29(5), 1189–1232.</p>
+    <p><b>Geurts, P., Ernst, D. &amp; Wehenkel, L.</b> (2006). Extremely randomized trees. <i>Machine Learning</i>, 63, 3–42.</p>
+    <p><b>Hajek, P. &amp; Novotny, J.</b> (2022). Fuzzy rule-based prediction of gold prices using news affect. <i>Expert Systems with Applications</i>, 193, 116487.</p>
+    <p><b>Hoerl, A. E. &amp; Kennard, R. W.</b> (1970). Ridge regression: Biased estimation for nonorthogonal problems. <i>Technometrics</i>, 12(1), 55–67.</p>
+    <p><b>Ji, Y. et al.</b> (2026). Forecasting the price of gold with integrated media sentiment: CNN-QRLSTM. <i>Entropy</i>, 28(3), 271.</p>
+    <p><b>Ke, G. et al.</b> (2017). LightGBM: A highly efficient gradient boosting decision tree. <i>NeurIPS</i>, 30.</p>
+    <p><b>Liang, Y., Lin, Y. &amp; Lu, Q.</b> (2022). Forecasting gold price using a novel hybrid model with ICEEMDAN and LSTM-CNN-CBAM. <i>Expert Systems with Applications</i>, 206, 117847.</p>
+    <p><b>Lundberg, S. M. &amp; Lee, S.-I.</b> (2017). A unified approach to interpreting model predictions. <i>NeurIPS</i>, 30.</p>
+    <p><b>Merton, R. C.</b> (1976). Option pricing when underlying stock returns are discontinuous. <i>J. Financial Economics</i>, 3(1–2), 125–144.</p>
+    <p><b>Prokhorenkova, L. et al.</b> (2018). CatBoost: Unbiased boosting with categorical features. <i>NeurIPS</i>, 31.</p>
+    <p><b>Quang, P. D. &amp; Thang, T. Q.</b> (2025). Analysis and forecasting of daily global gold price: An SARIMA-LSTM approach with random forest technique. <i>Cogent Economics &amp; Finance</i>, 13(1), 2568969.</p>
+    <p><b>Saini, A., Singh, R. K. &amp; Sinha, P.</b> (2025). Forecasting gold price using hybrid deep neural network LSTM-Autoencoder. <i>Discover Artificial Intelligence</i>, 5, 281.</p>
+    <p><b>Stankovic, M. et al.</b> (2023). Bi-directional LSTM optimization by improved teaching-learning based algorithm for univariate gold price forecasting. <i>ICICT 2023</i>, 1650–1657.</p>
+    <p><b>Taneva-Angelova, G., Raychev, S. &amp; Ilieva, G.</b> (2025). A framework for gold price prediction combining classical and intelligent methods. <i>Int. J. Financial Studies</i>, 13(2), 102.</p>
+    <p><b>Yang, Y.</b> (2025). TCN-QV: An attention-based deep learning method for long sequence time-series forecasting of gold prices. <i>PLOS ONE</i>, 20(5), e0319776.</p>
+    <p><b>Yahoo Finance</b> (2026). Historical market data: GC=F, SI=F, CL=F, DX-Y.NYB, ^GSPC, ^VIX, ^TNX. Consultado el 1 de julio de 2026.</p>
+  </div>
+  <p class="muted" style="margin-top:10px; font-size:12px">Artículo completo: <i>«Predicción del precio del oro con LightGBM optimizado mediante Optuna»</i> · Ramírez, Patiño &amp; Bedoya (2026) · <a href="../dashboard/" style="color:var(--gold)">dashboard interactivo del proyecto</a></p>
+</section>
+
+</div></div>
+
+<script>
+(function(){
+  const deck=document.getElementById('deck');
+  const slides=[...document.querySelectorAll('.slide')];
+  const N=slides.length;
+  const counter=document.getElementById('counter');
+  const progress=document.getElementById('progress');
+  const toc=document.getElementById('toc');
+  const tocgrid=document.getElementById('tocgrid');
+  let cur=0;
+
+  // escala 16:9
+  function fit(){
+    const s=Math.min(innerWidth/1280, innerHeight/720);
+    deck.style.transform=`scale(${s})`;
+  }
+  addEventListener('resize',fit); fit();
+
+  // índice
+  slides.forEach((sl,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML=`<span class="n">${String(i+1).padStart(2,'0')}</span><span>${sl.dataset.title}</span>`;
+    b.onclick=()=>{go(i); toggleToc(false);};
+    tocgrid.appendChild(b);
+  });
+
+  function go(i){
+    i=Math.max(0,Math.min(N-1,i));
+    if(i===cur && slides[cur].classList.contains('active')) { sync(); return; }
+    slides.forEach((sl,k)=>{
+      sl.classList.toggle('active',k===i);
+      sl.classList.toggle('before',k<i);
+    });
+    cur=i; sync();
+  }
+  function sync(){
+    counter.textContent=`${cur+1} / ${N}`;
+    progress.style.width=((cur+1)/N*100)+'%';
+    [...tocgrid.children].forEach((b,k)=>b.classList.toggle('cur',k===cur));
+    if(location.hash!=='#/'+(cur+1)) history.replaceState(null,'','#/'+(cur+1));
+  }
+  const next=()=>go(cur+1), prev=()=>go(cur-1);
+
+  function toggleToc(open){
+    toc.classList.toggle('open', open===undefined ? !toc.classList.contains('open') : open);
+  }
+
+  // teclado
+  addEventListener('keydown',e=>{
+    if(e.key==='Escape'){toggleToc(); return;}
+    if(toc.classList.contains('open')) return;
+    switch(e.key){
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown': e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); go(0); break;
+      case 'End': e.preventDefault(); go(N-1); break;
+      case 'f': case 'F':
+        document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+        break;
+    }
+  });
+
+  // botones
+  document.getElementById('bNext').onclick=next;
+  document.getElementById('bPrev').onclick=prev;
+  document.getElementById('bToc').onclick=()=>toggleToc();
+  document.getElementById('bFull').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+
+  // gestos táctiles
+  let tx=null,ty=null;
+  addEventListener('touchstart',e=>{tx=e.touches[0].clientX; ty=e.touches[0].clientY;},{passive:true});
+  addEventListener('touchend',e=>{
+    if(tx===null) return;
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)) (dx<0?next:prev)();
+    tx=ty=null;
+  },{passive:true});
+
+  // rueda del ratón (con freno)
+  let wl=0;
+  addEventListener('wheel',e=>{
+    const now=Date.now(); if(now-wl<450) return;
+    if(Math.abs(e.deltaY)<20) return;
+    wl=now; e.deltaY>0?next():prev();
+  },{passive:true});
+
+  // hash inicial y navegación por hash (enlaces de la agenda)
+  function fromHash(){
+    const m=location.hash.match(/^#\/(\d+)/);
+    go(m?parseInt(m[1],10)-1:0);
+  }
+  addEventListener('hashchange',fromHash);
+  fromHash();
+})();
+</script>
+</body>
+</html>
